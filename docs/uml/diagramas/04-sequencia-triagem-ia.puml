@@ -1,0 +1,46 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2563EB
+skinparam ParticipantBorderColor #2563EB
+skinparam SequenceLifeLineBorderColor #64748B
+skinparam SequenceGroupBorderColor #2563EB
+title PulseOps AI — Sequencia: IA com aprovacao humana (Parte 5, planejado)
+autonumber
+actor Analista as A
+participant "Frontend React" as UI
+participant "API / sugestoes" as API
+control "Servico de triagem" as S
+participant "Provedor LLM" as LLM
+database "PostgreSQL" as DB
+A -> UI : Solicitar recomendacao
+UI -> API : POST /tickets/{id}/ai-suggestions
+API -> API : Autenticar e autorizar analista/admin
+API -> S : Gerar sugestao para chamado
+S -> DB : Obter ticket autorizado
+DB --> S : Titulo/descricao/categoria
+S -> S : Remover dados desnecessarios e limitar entrada
+S -> LLM : Solicitar classificacao estruturada
+alt Timeout, falha ou resposta invalida
+ LLM --> S : Erro / texto invalido
+ S --> API : Sem sugestao aplicavel
+ API --> UI : Erro controlado; triagem manual disponivel
+else Resposta valida
+ LLM --> S : Categoria, prioridade, resumo, justificativa
+ S -> S : Validar campos e valores permitidos
+ S -> DB : INSERT ai_suggestions (pendente)
+ DB --> S : ID da sugestao
+ S --> API : Sugestao pendente
+ API --> UI : Mostrar recomendacao SEM alterar ticket
+ A -> UI : Aprovar ou rejeitar
+ UI -> API : POST /ai-suggestions/{id}/review
+ API -> API : Revalidar acesso e decisao
+ alt Rejeitada
+  API -> DB : Transacao: status rejeitada e revisor
+ else Aprovada
+  API -> DB : Transacao: aplicar campos permitidos; registrar historia; marcar aprovada
+ end
+ DB --> API : Commit confirmado
+ API --> UI : Decisao humana registrada
+end
+@enduml

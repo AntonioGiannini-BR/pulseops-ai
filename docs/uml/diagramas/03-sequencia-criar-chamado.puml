@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2563EB
+skinparam ParticipantBorderColor #2563EB
+skinparam SequenceLifeLineBorderColor #64748B
+skinparam SequenceGroupBorderColor #2563EB
+title PulseOps AI — Sequencia: abertura de chamado (Parte 2, planejado)
+autonumber
+actor Solicitante as S
+participant "Frontend React" as UI
+participant "API /tickets" as API
+control "TicketService" as Service
+database "PostgreSQL" as DB
+S -> UI : Preenche titulo, descricao e categoria
+UI -> API : POST /api/v1/tickets + credencial
+API -> API : Autenticar, autorizar e validar
+alt Requisicao invalida / sem acesso
+ API --> UI : 401 / 403 / 422
+ UI --> S : Exibe erro sem revelar dados internos
+else Valida
+ API -> Service : criar_chamado(dados, user_id do token)
+ Service -> DB : Consultar categoria ativa e SLA por prioridade
+ DB --> Service : Categoria e prazo configurado
+ Service -> Service : Calcular due_at em UTC
+ Service -> DB : BEGIN; INSERT ticket; INSERT history; COMMIT
+ alt Falha na transacao
+  DB --> Service : ROLLBACK / erro
+  Service --> API : Falha controlada
+  API --> UI : Erro sem dados internos
+ else Sucesso
+  DB --> Service : ID + registro persistido
+  Service --> API : Chamado criado
+  API --> UI : 201 + ticket e identificador
+  UI --> S : Confirma abertura do chamado
+ end
+end
+@enduml
