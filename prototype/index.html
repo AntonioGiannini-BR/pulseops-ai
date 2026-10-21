@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#071227" />
+  <title>PulseOps AI — Protótipo da Parte 1</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview" aria-label="PulseOps AI, início"><span class="brand-symbol">◈</span><span>pulse<span class="brand-strong">ops</span><small>AI</small></span></a>
+      <div class="brand-subtitle">PLATAFORMA INTELIGENTE</div>
+      <div class="nav-label">MENU PRINCIPAL</div>
+      <nav class="nav" aria-label="Navegação principal">
+        <button class="nav-item active" data-page="overview" type="button"><span class="nav-icon">▦</span> Visão geral</button>
+        <button class="nav-item" data-page="tickets" type="button"><span class="nav-icon">▤</span> Chamados <span id="sidebar-count" class="nav-count">8</span></button>
+        <button class="nav-item" data-page="teams" type="button"><span class="nav-icon">♙</span> Equipes</button>
+        <button class="nav-item" data-page="ai" type="button"><span class="nav-icon">✧</span> Central de IA <span class="soon">BETA</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="development-tag">◉ AMBIENTE DE DEMONSTRAÇÃO</div>
+        <p>Protótipo offline • Dados fictícios<br>Parte 1: planejamento e banco</p>
+        <div class="person"><span class="avatar">MO</span><span><strong>Marina Oliveira</strong><small>Administrador • Demo</small></span><span class="chevron">⌄</span></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left"><button class="mobile-menu" id="mobile-menu" aria-label="Abrir menu">☰</button><span>Workspace</span> <span class="breadcrumb">/</span><span id="breadcrumb">Visão geral</span></div>
+        <div class="top-actions"><span class="environment">● Protótipo local</span><div class="initial-circle">MO</div></div>
+      </header>
+      <div class="content">
+        <section class="page active" id="page-overview">
+          <div class="page-heading"><div><div class="eyebrow">PULSEOPS / DASHBOARD</div><h1>Visão geral <span class="wave">✦</span></h1><p>Acompanhe sua operação e tome decisões com dados.</p></div><button class="button primary" data-open-modal type="button">＋ Novo chamado</button></div>
+          <div class="status-note"><span>ⓘ</span> Esta é uma prévia visual. Os dados estão armazenados somente na memória do navegador, sem conexão com PostgreSQL ou IA real.</div>
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-top"><span>Total de chamados</span><span class="kpi-icon k-blue">▦</span></div><div class="kpi-value" id="kpi-total">8</div><div class="kpi-foot">Registrados na demonstração</div></div>
+            <div class="kpi-card"><div class="kpi-top"><span>Em andamento</span><span class="kpi-icon k-purple">◷</span></div><div class="kpi-value" id="kpi-pending">5</div><div class="kpi-foot"><span class="positive">●</span> Aguardando resolução</div></div>
+            <div class="kpi-card"><div class="kpi-top"><span>Concluídos</span><span class="kpi-icon k-green">✓</span></div><div class="kpi-value" id="kpi-complete">3</div><div class="kpi-foot">Resolvidos ou fechados</div></div>
+            <div class="kpi-card"><div class="kpi-top"><span>Fora do SLA</span><span class="kpi-icon k-orange">⚑</span></div><div class="kpi-value" id="kpi-sla">2</div><div class="kpi-foot">Ocorrências com atraso</div></div>
+          </div>
+          <div class="two-col">
+            <div class="panel chart-panel"><div class="panel-top"><div><h2>Chamados por categoria</h2><p>Distribuição das ocorrências registradas</p></div><span class="light-tag">Tempo real na demo</span></div><div class="bar-chart" id="category-chart"></div></div>
+            <div class="panel"><div class="panel-top"><div><h2>Por prioridade</h2><p>Volume segmentado por severidade</p></div><span class="outline-button">◈</span></div><div class="donut-layout"><div class="donut" id="donut"><div class="donut-center"><strong id="donut-total">8</strong><small>Chamados</small></div></div><div class="donut-legend" id="priority-legend"></div></div><div class="mini-note">SLA: crítica 1h • alta 4h • média 24h • baixa 72h</div></div>
+          </div>
+          <section class="panel table-panel"><div class="panel-top"><div><h2>Chamados recentes</h2><p>Últimas ocorrências da operação</p></div><button class="text-button" data-page="tickets" type="button">Ver todos →</button></div><div class="table-overflow"><table><thead><tr><th>ID</th><th>Chamado</th><th>Categoria</th><th>Prioridade</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="recent-tickets"></tbody></table></div></section>
+        </section>
+        <section class="page" id="page-tickets"><div class="page-heading"><div><div class="eyebrow">OPERAÇÕES / CHAMADOS</div><h1>Gerenciar chamados</h1><p>Pesquise, filtre e registre incidentes da operação.</p></div><button class="button primary" data-open-modal type="button">＋ Novo chamado</button></div><div class="panel table-panel"><div class="filters"><label class="sr-only" for="search">Buscar chamado</label><input id="search" type="search" placeholder="⌕  Buscar por ID, título ou responsável..."/><label class="sr-only" for="filter-status">Filtrar por status</label><select id="filter-status"><option value="todos">Todos os status</option><option value="aberto">Aberto</option><option value="em_triagem">Em triagem</option><option value="em_atendimento">Em atendimento</option><option value="resolvido">Resolvido</option><option value="fechado">Fechado</option></select><button id="export-csv" class="button secondary" type="button">↓ Exportar CSV</button></div><div class="table-overflow"><table><thead><tr><th>ID</th><th>Chamado</th><th>Categoria</th><th>Prioridade</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="all-tickets"></tbody></table></div><p id="table-message" class="table-message"></p></div></section>
+        <section class="page" id="page-teams"><div class="page-heading"><div><div class="eyebrow">ORGANIZAÇÃO / EQUIPES</div><h1>Equipes e departamentos</h1><p>Estrutura organizacional criada no modelo de dados.</p></div></div><div class="teams-grid"><div class="team-card"><div class="team-icon">⌘</div><h2>Tecnologia</h2><p>Administração, suporte, infraestrutura e sistemas.</p><div><span>3 integrantes demo</span></div></div><div class="team-card"><div class="team-icon">▥</div><h2>Comercial</h2><p>Processos de vendas, pedidos e sistemas comerciais.</p><div><span>1 integrante demo</span></div></div><div class="team-card"><div class="team-icon">◈</div><h2>Financeiro</h2><p>Gestão financeira e integrações operacionais.</p><div><span>1 integrante demo</span></div></div><div class="team-card"><div class="team-icon">▦</div><h2>Operações</h2><p>Infraestrutura e atividades de apoio à operação.</p><div><span>1 integrante demo</span></div></div></div></section>
+        <section class="page" id="page-ai"><div class="page-heading"><div><div class="eyebrow">INTELIGÊNCIA / ASSISTENTE</div><h1>Central de IA <span class="wave">✧</span></h1><p>Planejamento de triagem e análise supervisionadas.</p></div><span class="light-tag">Implementação na Semana 5</span></div><div class="ai-hero"><div class="ai-mark">✧</div><h2>Inteligência aplicada ao atendimento</h2><p>A IA futuramente poderá sugerir categorias, prioridades e resumos para os analistas. Toda recomendação exigirá validação humana.</p><div class="ai-demo"><div class="ai-label">EXEMPLO DE SUGESTÃO FICTÍCIA</div><strong>INC-000001 · Sistema de vendas indisponível</strong><div class="ai-tags"><span>Categoria: Sistemas</span><span>Prioridade sugerida: Crítica</span><span>Estado: Pendente</span></div><p>"Interrupção do sistema de vendas impede a finalização dos pedidos."</p><small>Saída ilustrativa, não gerada por modelo de IA.</small></div></div></section>
+      </div>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">NOVA SOLICITAÇÃO</div><h2 id="modal-title">Criar chamado</h2></div><button class="close-button" id="modal-close" type="button" aria-label="Fechar">✕</button></div><form id="ticket-form"><label for="new-title">Título do chamado *</label><input id="new-title" name="title" required maxlength="180" placeholder="Ex: Sistema de vendas indisponível"/><label for="new-description">Descrição *</label><textarea id="new-description" name="description" required rows="4" placeholder="Descreva o problema..." ></textarea><div class="form-grid"><div><label for="new-category">Categoria</label><select id="new-category" name="category"><option>Sistemas</option><option>Infraestrutura</option><option>Acessos</option><option>Equipamentos</option><option>Outros</option></select></div><div><label for="new-priority">Prioridade</label><select id="new-priority" name="priority"><option value="media">Média</option><option value="baixa">Baixa</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></div></div><p class="form-hint">Chamados criados aqui existem apenas durante esta sessão no navegador.</p><div class="modal-actions"><button class="button secondary" id="modal-cancel" type="button">Cancelar</button><button class="button primary" type="submit">Criar chamado</button></div></form></div></div>
+  <div id="toast" role="status" class="toast" aria-live="polite"></div>
+</body>
+</html>
