@@ -1,0 +1,32 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2563EB
+title PulseOps AI — Implantacao futura (nao executada)
+node "Dispositivo do usuario" as browser {
+ artifact "Browser" as br
+}
+node "Hospedagem web / CDN" as web {
+ artifact "Frontend React build" as front
+}
+node "Servidor de aplicacao" as apps {
+ node "Container API" as api {
+  artifact "FastAPI + Uvicorn" as fast
+ }
+}
+node "Servico de banco" as data {
+ database "PostgreSQL" as pg
+}
+cloud "Provedor externo" as ext {
+ component "LLM API" as llm
+}
+br --> front : HTTPS
+br --> fast : HTTPS REST
+fast --> pg : PostgreSQL / TLS se remoto
+fast --> llm : HTTPS / dados minimizados
+note right of apps
+  Docker e SQL da Parte 1 preparam
+  apenas o banco de desenvolvimento.
+  Os recursos de hospedagem sao proposta.
+end note
+@enduml
