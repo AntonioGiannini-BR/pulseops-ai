@@ -1,0 +1,41 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowColor #2563EB
+title PulseOps AI — Componentes (arquitetura-alvo)
+package "Frontend — React/TypeScript" {
+ component "Dashboard e chamados" as UI
+ component "Cliente REST" as Client
+ UI --> Client
+}
+package "Backend — FastAPI (monolito modular)" {
+ component "Rotas REST + Schemas" as API
+ component "Autenticacao / RBAC" as Auth
+ component "Servico de chamados" as Tickets
+ component "Servico de SLA" as SLA
+ component "Consultas de indicadores" as KPIs
+ component "Triagem IA supervisionada" as AI
+ component "Repositorios / ORM" as Repo
+ API --> Auth
+ API --> Tickets
+ API --> KPIs
+ API --> AI
+ Tickets --> SLA
+ Tickets --> Repo
+ SLA --> Repo
+ KPIs --> Repo
+ AI --> Repo
+}
+database "PostgreSQL" as DB
+cloud "API de IA externa" as LLM
+Client --> API : HTTPS / JSON
+Repo --> DB : SQL
+AI --> LLM : Entrada minimizada
+LLM --> AI : Sugestao, nunca decisao
+note bottom of API
+  Planejado. Na Parte 1 existem somente
+  prototype/ e os scripts db/.
+end note
+@enduml

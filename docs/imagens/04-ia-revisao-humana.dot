@@ -1,0 +1,20 @@
+digraph G {
+rankdir=TB;
+graph [bgcolor="#F8FAFD", pad="0.35", nodesep="0.52", ranksep="0.78", splines=ortho, fontname="DejaVu Sans", fontsize=20, fontcolor="#132343", labeljust=l, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#D7E2F1", penwidth=1.45, margin="0.23,0.18", fontname="DejaVu Sans", fontsize=13, fontcolor="#132343"];
+edge [color="#90A6C6", penwidth=1.8, arrowsize=0.8, fontname="DejaVu Sans", fontsize=10, fontcolor="#526482"];
+
+label="IA RESPONSÁVEL • Sugestão, nunca decisão automática";
+
+  analista [label="Analista solicita\ntriagem assistida", fillcolor="#EAF2FF",color="#2563EB"];
+  api [label="API verifica permissão\ne remove dados desnecessários",fillcolor="#FFFFFF",color="#2563EB"];
+  model [label="Modelo de IA\nRetorna recomendação",fillcolor="#FFF2E5",color="#E78028"];
+  pending [label="Salva sugestão\nStatus: pendente",fillcolor="#FFFFFF",color="#7755D1"];
+  decisao [shape=diamond, label="Revisão\nhumana", fillcolor="#EAF2FF",color="#2563EB"];
+  aceita [label="Aprova\nAplica com auditoria",fillcolor="#E7F8F1",color="#0D9775"];
+  rejeita [label="Rejeita\nPreserva o chamado",fillcolor="#FFF2E5",color="#E78028"];
+  analista -> api -> model -> pending -> decisao;
+  decisao -> aceita [label="aprovar"];
+  decisao -> rejeita [label="rejeitar"];
+
+}

@@ -1,0 +1,23 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2563EB
+title PulseOps AI — Estados de um chamado (regras-alvo)
+[*] --> aberto : Criacao
+state "Aberto" as aberto
+state "Em triagem" as triagem
+state "Em atendimento" as atendimento
+state "Resolvido" as resolvido
+state "Fechado" as fechado
+aberto --> triagem : Analisar
+aberto --> atendimento : Atribuicao direta
+triagem --> atendimento : Atribuir / assumir
+atendimento --> resolvido : Concluir + resolved_at
+resolvido --> fechado : Encerrar + closed_at
+resolvido --> atendimento : Reabrir [politica de SLA a definir]
+fechado --> [*]
+note bottom of resolvido
+  Banco valida timestamps coerentes.
+  A API devera validar as transicoes.
+end note
+@enduml

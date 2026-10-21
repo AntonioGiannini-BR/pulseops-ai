@@ -1,0 +1,18 @@
+digraph G {
+rankdir=LR;
+graph [bgcolor="#F8FAFD", pad="0.35", nodesep="0.52", ranksep="0.78", splines=ortho, fontname="DejaVu Sans", fontsize=20, fontcolor="#132343", labeljust=l, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#D7E2F1", penwidth=1.45, margin="0.23,0.18", fontname="DejaVu Sans", fontsize=13, fontcolor="#132343"];
+edge [color="#90A6C6", penwidth=1.8, arrowsize=0.8, fontname="DejaVu Sans", fontsize=10, fontcolor="#526482"];
+
+label="PARTE 1 • Estado atual (protótipo + banco separado)";
+
+  navegador [label="Navegador local\nHTML + CSS + JavaScript", fillcolor="#EAF2FF", color="#2563EB"];
+  demo [label="Dados fictícios\nMemória do navegador", fillcolor="#E7F8F1", color="#0D9775"];
+  docker [label="Docker Compose\nPreparado para PostgreSQL", fillcolor="#FFF2E5", color="#E78028"];
+  sql [label="Scripts SQL\nTabelas • seeds • consultas", fillcolor="#FFF2E5", color="#E78028"];
+  navegador -> demo [label="   acesso local   "];
+  sql -> docker [label="bootstrap ao iniciar"];
+  navegador -> docker [style=dashed, arrowhead=none, color="#E78028", label="SEM conexão"];
+  {rank=same; demo; docker;}
+
+}

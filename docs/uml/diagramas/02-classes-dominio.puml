@@ -1,0 +1,79 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #2563EB
+hide methods
+hide circle
+title PulseOps AI — Modelo de classes (alinhado ao SQL da Parte 1)
+class "Departamento\n(departments)" as Department {
+ +id: bigint
+ +name: varchar(100)
+}
+class "Usuario\n(app_users)" as User {
+ +id: bigint
+ +department_id: bigint?
+ +full_name: varchar(150)
+ +email: varchar(255)
+ +role: enum
+ +is_active: boolean
+}
+class "Categoria\n(categories)" as Category {
+ +id: bigint
+ +name: varchar(90)
+ +is_active: boolean
+}
+class "PoliticaSLA\n(sla_policies)" as SLA {
+ +id: bigint
+ +priority: enum
+ +resolution_minutes: int
+}
+class "Chamado\n(tickets)" as Ticket {
+ +id: bigint
+ +title: varchar(180)
+ +description: text
+ +priority: enum
+ +status: enum
+ +opened_at: timestamp
+ +due_at: timestamp?
+ +resolved_at: timestamp?
+ +closed_at: timestamp?
+}
+class "Comentario\n(ticket_comments)" as Comment {
+ +id: bigint
+ +body: text
+ +is_internal: boolean
+ +created_at: timestamp
+}
+class "Historico\n(ticket_history)" as History {
+ +id: bigint
+ +action: varchar(40)
+ +old_value: text?
+ +new_value: text?
+ +created_at: timestamp
+}
+class "SugestaoIA\n(ai_suggestions)" as AI {
+ +id: bigint
+ +suggested_priority: enum?
+ +review_status: enum
+ +reviewed_at: timestamp?
+}
+Department "0..1" <-- "0..*" User : lotacao
+Department "0..1" <-- "0..*" Ticket : setor
+User "1" <-- "0..*" Ticket : solicitante
+User "0..1" <-- "0..*" Ticket : responsavel
+Category "1" <-- "0..*" Ticket : categoria
+Ticket "1" *-- "0..*" Comment : comentarios
+Ticket "1" *-- "0..*" History : eventos
+Ticket "1" *-- "0..*" AI : sugestoes
+User "1" <-- "0..*" Comment : autor
+User "0..1" <-- "0..*" History : ator
+User "0..1" <-- "0..*" AI : revisor
+Category "0..1" <-- "0..*" AI : sugerida
+Ticket ..> SLA : consulta por priority\n(nao ha FK direta)
+note bottom of Ticket
+  As cardinalidades refletem as FKs da Parte 1.
+  Classes de dominio sao modelo de projeto,
+  nao codigo Python ja implementado.
+end note
+@enduml
