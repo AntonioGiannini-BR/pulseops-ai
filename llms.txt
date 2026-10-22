@@ -1,0 +1,43 @@
+# PulseOps AI
+
+> Plataforma demonstrativa de gestão de chamados corporativos. Neste estágio (Parte 1) existe protótipo offline HTML/CSS/JS; scripts SQL, Docker, dados fictícios e testes foram preparados para validação local. FastAPI, React, autenticação e IA estão planejados, não implementados. Não tratar documentos de especificação nem imagens de arquitetura como prova de implementação.
+
+## Ponto de entrada
+
+- [Apresentação e execução](README.md)
+- [Índice de documentação](docs/00-indice.md)
+- [Resumo técnico](DOCUMENTACAO.md)
+
+## Planejamento e requisitos
+
+- [Plano geral](docs/planejamento/plano-geral.md)
+- [Visão do produto](docs/planejamento/visao-do-produto.md)
+- [Roadmap e sprints](docs/planejamento/roadmap-e-sprints.md)
+- [Histórias de usuário e aceites](docs/requisitos/requisitos-e-historias.md)
+- [Regras de negócio e SLA](docs/requisitos/regras-de-negocio.md)
+
+## Engenharia e implantação planejada
+
+- [Arquitetura](docs/arquitetura/arquitetura.md)
+- [Modelagem de dados](docs/banco-de-dados/modelagem.md)
+- [Contrato preliminar da API](docs/api/contrato-api.md)
+- [Diagramas UML e suas fontes PlantUML](docs/uml/README.md)
+- [Segurança e privacidade](docs/seguranca/seguranca-e-privacidade.md)
+- [Plano de testes](docs/testes/plano-de-testes.md)
+- [Riscos e decisões arquiteturais](docs/planejamento/riscos-e-decisoes.md)
+
+## Código disponível
+
+- [Protótipo HTML](prototype/index.html)
+- [Esquema PostgreSQL](db/init/01_schema.sql)
+- [Dados fictícios](db/init/02_seed_demo.sql)
+- [Consultas analíticas](db/queries/indicadores.sql)
+- [Testes SQL](db/tests/01_smoke_tests.sql)
+- [Docker Compose](compose.yaml)
+
+## Optional
+
+- [Contexto textual completo](llms-full.txt)
+- [Galeria de arquitetura](docs/arquitetura/galeria-visual.md)
+- [Padrões de desenvolvimento](docs/arquitetura/padroes-de-desenvolvimento.md)
+- [Guia de Git e commits](docs/contribuicao/git-e-commits.md)
