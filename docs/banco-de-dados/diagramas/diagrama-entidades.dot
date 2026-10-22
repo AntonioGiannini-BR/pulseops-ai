@@ -1,0 +1,25 @@
+digraph pulseops {
+  graph [rankdir=LR, bgcolor="#F6F8FC", pad="0.45", nodesep="0.62", ranksep="1.1", splines=polyline, fontname="Arial", label="PulseOps AI  •  Modelo de Dados — Parte 1", labelloc=t, fontsize=20, fontcolor="#10254C"];
+  node [shape=plain, fontname="Arial"];
+  edge [color="#89A2C7", penwidth=1.45, arrowsize=.65, fontname="Arial", fontcolor="#637794", fontsize=9];
+  departments [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>departments</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT">name</TD></TR></TABLE>>];
+  app_users [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>app_users</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  department_id</TD></TR><TR><TD ALIGN="LEFT">full_name, email</TD></TR><TR><TD ALIGN="LEFT">password_hash, role</TD></TR></TABLE>>];
+  categories [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>categories</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT">name, description</TD></TR></TABLE>>];
+  sla_policies [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#4E65A8"><FONT COLOR="white"><B>sla_policies</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT">priority (unique)</TD></TR><TR><TD ALIGN="LEFT">resolution_minutes</TD></TR></TABLE>>];
+  tickets [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="7" COLOR="#4B8AF4" BGCOLOR="white"><TR><TD BGCOLOR="#2B67E9"><FONT COLOR="white"><B>tickets</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  requester_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  assignee_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  department_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  category_id</TD></TR><TR><TD ALIGN="LEFT">status, priority</TD></TR><TR><TD ALIGN="LEFT">opened_at, due_at</TD></TR><TR><TD ALIGN="LEFT">resolved_at, closed_at</TD></TR></TABLE>>];
+  ticket_comments [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>ticket_comments</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  ticket_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  author_id</TD></TR><TR><TD ALIGN="LEFT">body, is_internal</TD></TR></TABLE>>];
+  ticket_history [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>ticket_history</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  ticket_id, actor_id</TD></TR><TR><TD ALIGN="LEFT">action, details</TD></TR></TABLE>>];
+  ai_suggestions [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#CBD7EB" BGCOLOR="white"><TR><TD BGCOLOR="#203A6B"><FONT COLOR="white"><B>ai_suggestions</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#497BCE">PK</FONT>  id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  ticket_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  suggested_category_id</TD></TR><TR><TD ALIGN="LEFT"><FONT COLOR="#CA8533">FK</FONT>  reviewed_by_id</TD></TR><TR><TD ALIGN="LEFT">review_status, summary</TD></TR></TABLE>>];
+  departments -> app_users [label="1:N", dir=forward];
+  departments -> tickets [label="1:N"];
+  categories -> tickets [label="1:N"];
+  app_users -> tickets [label="1:N solicitante / responsável"];
+  tickets -> ticket_comments [label="1:N"];
+  tickets -> ticket_history [label="1:N"];
+  tickets -> ai_suggestions [label="1:N"];
+  app_users -> ticket_comments [style=dashed, label="autor"];
+  app_users -> ticket_history [style=dashed, label="ator"];
+  app_users -> ai_suggestions [style=dashed, label="revisor"];
+  categories -> ai_suggestions [style=dashed, label="categoria sugerida"];
+  sla_policies -> tickets [style=dotted, color="#B49AC7", label="regra via prioridade*", constraint=false, arrowhead=none];
+}

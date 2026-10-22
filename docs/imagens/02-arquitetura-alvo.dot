@@ -1,0 +1,22 @@
+digraph G {
+rankdir=TB;
+graph [bgcolor="#F8FAFD", pad="0.35", nodesep="0.52", ranksep="0.78", splines=ortho, fontname="DejaVu Sans", fontsize=20, fontcolor="#132343", labeljust=l, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#D7E2F1", penwidth=1.45, margin="0.23,0.18", fontname="DejaVu Sans", fontsize=13, fontcolor="#132343"];
+edge [color="#90A6C6", penwidth=1.8, arrowsize=0.8, fontname="DejaVu Sans", fontsize=10, fontcolor="#526482"];
+
+label="ARQUITETURA-ALVO • MVP (ainda não implementada)";
+
+  pessoa [label="Solicitante • Analista\nAdministrador",fillcolor="#EAF2FF",color="#2563EB"];
+  ui [label="Frontend\nReact + TypeScript", fillcolor="#EAF2FF",color="#2563EB"];
+  api [label="API REST\nFastAPI + Pydantic",fillcolor="#EAF2FF",color="#2563EB"];
+  services [label="Serviços de negócio\nPermissões • Tickets • SLA",fillcolor="#FFFFFF",color="#2563EB"];
+  pg [label="PostgreSQL\nDados + Histórico",fillcolor="#E7F8F1",color="#0D9775"];
+  llm [label="Provedor LLM externo\nTriagem assistida",fillcolor="#FFF2E5",color="#E78028"];
+  pessoa -> ui [label="HTTPS"];
+  ui -> api [label="JSON / REST"];
+  api -> services [label="valida regras"];
+  services -> pg [label="SQL + transações"];
+  services -> llm [label="dados minimizados", style=dashed, color="#E78028"];
+  llm -> services [label="sugestão", style=dashed, color="#E78028", constraint=false];
+
+}

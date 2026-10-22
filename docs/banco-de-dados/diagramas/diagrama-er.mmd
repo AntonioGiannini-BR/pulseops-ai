@@ -1,0 +1,76 @@
+erDiagram
+    departments ||--o{ app_users : possui
+    departments |o--o{ tickets : recebe
+    app_users ||--o{ tickets : solicita
+    app_users |o--o{ tickets : atende
+    categories ||--o{ tickets : classifica
+    tickets ||--o{ ticket_comments : contem
+    app_users ||--o{ ticket_comments : escreve
+    tickets ||--o{ ticket_history : registra
+    app_users |o--o{ ticket_history : executa
+    tickets ||--o{ ai_suggestions : recebe
+    categories |o--o{ ai_suggestions : sugerida
+    app_users |o--o{ ai_suggestions : revisa
+
+    departments {
+      bigint id PK
+      varchar name UK
+      timestamptz created_at
+    }
+    app_users {
+      bigint id PK
+      bigint department_id FK
+      varchar full_name
+      varchar email UK
+      text password_hash
+      varchar role
+      boolean is_active
+    }
+    categories {
+      bigint id PK
+      varchar name UK
+      text description
+    }
+    sla_policies {
+      bigint id PK
+      varchar priority UK
+      integer resolution_minutes
+    }
+    tickets {
+      bigint id PK
+      bigint requester_id FK
+      bigint assignee_id FK
+      bigint department_id FK
+      bigint category_id FK
+      varchar title
+      text description
+      varchar priority
+      varchar status
+      timestamptz opened_at
+      timestamptz due_at
+      timestamptz resolved_at
+      timestamptz closed_at
+    }
+    ticket_comments {
+      bigint id PK
+      bigint ticket_id FK
+      bigint author_id FK
+      text body
+      boolean is_internal
+    }
+    ticket_history {
+      bigint id PK
+      bigint ticket_id FK
+      bigint actor_id FK
+      varchar action
+      jsonb details
+    }
+    ai_suggestions {
+      bigint id PK
+      bigint ticket_id FK
+      bigint suggested_category_id FK
+      bigint reviewed_by_id FK
+      varchar suggested_priority
+      varchar review_status
+      text summary
+    }

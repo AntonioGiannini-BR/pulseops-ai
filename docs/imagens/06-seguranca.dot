@@ -1,0 +1,19 @@
+digraph G {
+rankdir=TB;
+graph [bgcolor="#F8FAFD", pad="0.35", nodesep="0.52", ranksep="0.78", splines=ortho, fontname="DejaVu Sans", fontsize=20, fontcolor="#132343", labeljust=l, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#D7E2F1", penwidth=1.45, margin="0.23,0.18", fontname="DejaVu Sans", fontsize=13, fontcolor="#132343"];
+edge [color="#90A6C6", penwidth=1.8, arrowsize=0.8, fontname="DejaVu Sans", fontsize=10, fontcolor="#526482"];
+
+label="SEGURANÇA • Controles planejados por camada";
+
+  pessoa [label="Usuário\nPerfis e permissões",fillcolor="#EAF2FF",color="#2563EB"];
+  browser [label="Interface web\nValidação de entrada\nNUNCA confiar só no navegador",fillcolor="#EAF2FF",color="#2563EB"];
+  server [label="FastAPI\nAutenticação, autorização\nLogs sem segredos",fillcolor="#FFFFFF",color="#2563EB"];
+  db [label="PostgreSQL\nRestrições, transações\nDados com acesso mínimo",fillcolor="#E7F8F1",color="#0D9775"];
+  secret [label="Configuração segura\n.env fora do Git",fillcolor="#FFF2E5",color="#E78028"];
+  llm [label="Provedor externo de IA\nEnvio mínimo de dados\nRevisão da resposta",fillcolor="#FFF2E5",color="#E78028"];
+  pessoa -> browser -> server -> db;
+  secret -> server [style=dashed, color="#E78028"];
+  server -> llm [style=dashed, color="#E78028"];
+
+}
