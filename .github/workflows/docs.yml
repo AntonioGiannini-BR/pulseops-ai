@@ -1,0 +1,38 @@
+name: Validar documentacao
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "DOCUMENTACAO.md"
+      - "llms.txt"
+      - "llms-full.txt"
+      - "scripts/gerar-llms-full.py"
+      - "scripts/validar-documentacao.py"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "DOCUMENTACAO.md"
+      - "llms.txt"
+      - "llms-full.txt"
+      - "scripts/gerar-llms-full.py"
+      - "scripts/validar-documentacao.py"
+      - ".github/workflows/docs.yml"
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validar links, imagens e fontes UML
+        run: python scripts/validar-documentacao.py
+      - name: Verificar llms-full atualizado
+        run: |
+          python scripts/gerar-llms-full.py
+          git diff --exit-code -- llms-full.txt

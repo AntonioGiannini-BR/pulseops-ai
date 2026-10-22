@@ -1,0 +1,1615 @@
+# PulseOps AI — Contexto textual completo para LLMs
+
+> Este arquivo é gerado automaticamente. Altere os documentos `.md` originais e execute `python scripts/gerar-llms-full.py`.
+> Escopo atual: Parte 1 (protótipo offline, scripts SQL/Docker preparados). APIs, login, React, LLM e deploy são planos futuros, não recursos implementados.
+> Diagramas e imagens são referenciados por caminhos relativos no documento de origem, sem reprodução binária.
+
+
+---
+
+## Fonte: `README.md`
+
+# PulseOps AI — Gestão Inteligente de Operações
+
+Projeto de portfólio para estudar engenharia de software aplicada a suporte corporativo: gestão de chamados, rastreabilidade, SLAs, métricas e, futuramente, sugestões assistidas por IA com revisão humana.
+
+> **Status: Parte 1 — planejamento, documentação UML e protótipo.** O painel HTML/CSS/JavaScript funciona offline com dados fictícios. Esquema PostgreSQL, Docker e scripts de testes estão preparados, mas a execução do banco deve ser validada localmente. **FastAPI, React, login, integrações e IA ainda não estão implementados.**
+
+![Prévia do protótipo do dashboard](docs/imagens/dashboard-preview.png)
+
+## Documentação principal
+
+- [Índice de toda a documentação](docs/00-indice.md) — comece aqui.
+- [Planejamento](docs/planejamento/plano-geral.md) e [roadmap](docs/planejamento/roadmap-e-sprints.md).
+- [Requisitos e histórias de usuário](docs/requisitos/requisitos-e-historias.md) e [regras de negócio](docs/requisitos/regras-de-negocio.md).
+- [Arquitetura](docs/arquitetura/arquitetura.md), [galeria visual](docs/arquitetura/galeria-visual.md) e [diagramas PlantUML](docs/uml/README.md).
+- [Modelagem do banco de dados](docs/banco-de-dados/modelagem.md) e [API planejada](docs/api/contrato-api.md).
+- [Segurança](docs/seguranca/seguranca-e-privacidade.md), [testes](docs/testes/plano-de-testes.md) e [guia de commits](docs/contribuicao/git-e-commits.md).
+- **Para IA e agentes:** [`llms.txt`](llms.txt) (mapa curto) e [`llms-full.txt`](llms-full.txt) (documentação consolidada).
+
+## Arquitetura atual e proposta
+
+**Parte 1:** protótipo independente do banco; scripts SQL e PostgreSQL via Docker Compose preparados para validação.
+
+![Estado atual da Parte 1](docs/imagens/01-arquitetura-atual.png)
+
+**Planejado:** React + TypeScript, FastAPI, PostgreSQL e modelo de IA com revisão humana.
+
+![Arquitetura-alvo planejada](docs/imagens/02-arquitetura-alvo.png)
+
+## Executar protótipo no Windows
+
+1. Extraia este projeto e abra a pasta no VS Code.
+2. Abra `prototype/index.html` no navegador. A interface é demonstrativa e não salva alterações no PostgreSQL.
+3. Para subir o banco local, com o Docker Desktop aberto, execute no PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+# Troque POSTGRES_PASSWORD por uma senha de desenvolvimento forte antes de prosseguir
+docker compose up -d
+docker compose ps
+.\scripts\testar-banco.ps1
+```
+
+Para entrar no banco:
+
+```powershell
+docker compose exec database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+> **Atenção:** `docker compose down -v` apaga o volume do PostgreSQL. Os arquivos `db/init/*.sql` são aplicados somente na criação inicial do volume. Mudanças posteriores exigirão migrações.
+
+## Fontes disponíveis
+
+```text
+prototype/         HTML, CSS e JavaScript da demonstração
+db/init/           Esquema e dados fictícios para PostgreSQL
+db/queries/        Consultas analíticas
+db/tests/          Testes SQL preparados
+compose.yaml       Serviço local PostgreSQL
+scripts/           Verificação do banco, renderização UML e validação dos docs
+docs/              Planejamento, arquitetura, UML e imagens
+llms.txt           Navegação resumida para LLMs
+llms-full.txt      Contexto textual consolidado
+```
+
+## Qualidade e segurança
+
+- Não publique `.env`, credenciais ou dados reais de clientes.
+- Os dados do protótipo são fictícios e não constituem autenticação ou sistema pronto para produção.
+- Autenticação, autorização, proteção de API, logs de auditoria e testes end-to-end são **objetivos futuros**.
+- A renderização das fontes PlantUML oficiais depende de Java + JAR PlantUML no computador. As imagens existentes são prévias e não substituem a validação dessas fontes.
+
+## Verificar a documentação
+
+A ação [Validar documentação](.github/workflows/docs.yml) também executa essas verificações automaticamente no GitHub.
+
+```powershell
+python scripts/gerar-llms-full.py
+python scripts/validar-documentacao.py
+```
+
+[Documentação técnica consolidada](DOCUMENTACAO.md) · [Guia de Git e commits](docs/contribuicao/git-e-commits.md)
+
+
+---
+
+## Fonte: `DOCUMENTACAO.md`
+
+# Documentação técnica — PulseOps AI
+
+> **Versão:** 0.3.0 · **Situação:** Parte 1 (protótipo offline e infraestrutura SQL/Docker preparada para execução local). **Planejados:** FastAPI, React, autenticação, IA e deploy.
+
+## Objetivo
+
+Construir uma plataforma de gestão de chamados corporativos com histórico, responsáveis, categorias, priorização, prazos de SLA e indicadores. Evoluir para um produto full-stack com triagem por IA generativa **apenas mediante revisão humana**. O projeto é demonstrativo e voltado a aprendizado/portfólio.
+
+## O que realmente existe
+
+- Dashboard HTML/CSS/JavaScript offline com dados fictícios: [`prototype/`](prototype/).
+- Scripts PostgreSQL com oito tabelas, views e dados demonstrativos: [`db/init/`](db/init/) e [`db/queries/`](db/queries/).
+- Docker Compose preparado para rodar o PostgreSQL localmente: [`compose.yaml`](compose.yaml).
+- Diagramas arquiteturais, UML editável e documentação técnica: [`docs/`](docs/00-indice.md).
+- Testes de banco **incluídos, mas sem validação real neste ambiente**: [`db/tests/`](db/tests/) e [`scripts/testar-banco.ps1`](scripts/testar-banco.ps1).
+
+## Arquitetura de referência
+
+![Arquitetura-alvo (ainda não implementada)](docs/imagens/02-arquitetura-alvo.png)
+
+O backend FastAPI atenderá uma interface React, armazenará dados no PostgreSQL e controlará a criação, transição e auditoria de chamados. Um serviço opcional de IA fará sugestões que não poderão ser aplicadas sem aprovação de um analista autorizado. Essas camadas são **planejadas**. Consulte a [arquitetura detalhada](docs/arquitetura/arquitetura.md).
+
+## Modelo de domínio
+
+O esquema contém: `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`. O SQL é a fonte de verdade do modelo físico.
+
+![Entidades e relacionamentos](docs/banco-de-dados/diagramas/diagrama-entidades.png)
+
+Veja [modelagem](docs/banco-de-dados/modelagem.md) e [classes UML](docs/uml/README.md).
+
+## Contratos, regras e segurança
+
+- [Requisitos e casos de uso](docs/requisitos/requisitos-e-historias.md).
+- [Transições de status, papéis, SLA e IA supervisionada](docs/requisitos/regras-de-negocio.md).
+- [Contrato proposto da API](docs/api/contrato-api.md).
+- [Segurança e privacidade](docs/seguranca/seguranca-e-privacidade.md).
+- [Testes previstos e disponíveis](docs/testes/plano-de-testes.md).
+- [ADRs e riscos](docs/planejamento/riscos-e-decisoes.md).
+
+## Planejamento e decisões
+
+O MVP seguirá entregas incrementais, com arquitetura modular e testes por etapa. A implementação futura não deve ser reportada no currículo ou no GitHub como concluída antes de estar disponível e validada.
+
+Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejamento/roadmap-e-sprints.md), [Git e commits](docs/contribuicao/git-e-commits.md) e [índice completo](docs/00-indice.md).
+
+## Contexto legível por IA
+
+- [`llms.txt`](llms.txt): entrada curta e referências prioritárias.
+- [`llms-full.txt`](llms-full.txt): cópia textual consolidada dos documentos principais.
+- [`scripts/gerar-llms-full.py`](scripts/gerar-llms-full.py): regeneração do arquivo após atualizar os documentos.
+- [`scripts/validar-documentacao.py`](scripts/validar-documentacao.py): checagem de links e existência dos artefatos.
+
+
+---
+
+## Fonte: `docs/00-indice.md`
+
+# Índice da documentação — PulseOps AI
+
+> **Versão da documentação:** 0.3.0 · **Etapa:** Parte 1.
+> **Implementado/preparado:** protótipo offline; scripts SQL, Docker e testes de banco para executar localmente; documentação e UML.
+> **Planejado:** FastAPI, autenticação, frontend React, IA generativa, deploy e testes de integração. Não apresentar recursos planejados como concluídos.
+
+## Por onde começar
+
+1. [README principal](../README.md) — apresentação, recursos reais e execução.
+2. [Planejamento geral](planejamento/plano-geral.md) — problema, objetivos, escopo e entregas.
+3. [Visão do produto](planejamento/visao-do-produto.md) — público e MVP.
+4. [Requisitos e histórias](requisitos/requisitos-e-historias.md) — histórias, prioridades e critérios de aceite.
+5. [Arquitetura](arquitetura/arquitetura.md) — contexto, decisões e fluxos propostos.
+6. [Modelo de dados](banco-de-dados/modelagem.md) — oito tabelas e relacionamentos.
+7. [Diagramas UML](uml/README.md) — fontes PlantUML e imagens.
+8. [Roadmap e sprints](planejamento/roadmap-e-sprints.md) — entregas por semana.
+
+## Por área
+
+| Área | Documentos |
+|---|---|
+| Planejamento | [Plano geral](planejamento/plano-geral.md), [Visão](planejamento/visao-do-produto.md), [Roadmap](planejamento/roadmap-e-sprints.md), [Riscos/ADRs](planejamento/riscos-e-decisoes.md) |
+| Requisitos | [Histórias](requisitos/requisitos-e-historias.md), [Regras de negócio](requisitos/regras-de-negocio.md) |
+| Arquitetura | [Visão técnica](arquitetura/arquitetura.md), [Padrões](arquitetura/padroes-de-desenvolvimento.md), [Galeria](arquitetura/galeria-visual.md) |
+| Banco de dados | [Modelagem e DER](banco-de-dados/modelagem.md), [Esquema SQL](../db/init/01_schema.sql) |
+| API | [Contrato proposto](api/contrato-api.md) |
+| Segurança | [Plano de segurança e privacidade](seguranca/seguranca-e-privacidade.md) |
+| Testes | [Estratégia e validações](testes/plano-de-testes.md) |
+| UML | [Índice de diagramas](uml/README.md) e fontes `.puml` em `docs/uml/diagramas/` |
+| Contribuição | [Git e commits](contribuicao/git-e-commits.md) |
+
+## Documentação voltada para agentes de IA
+
+- [`llms.txt`](../llms.txt): mapa curto e seletivo das fontes autorizadas, pensado para leitura e navegação por agentes.
+- [`llms-full.txt`](../llms-full.txt): conteúdo textual consolidado da documentação para fornecer contexto com mínimo esforço de navegação.
+- [`DOCUMENTACAO.md`](../DOCUMENTACAO.md): síntese técnica organizada para leitura humana.
+- [`scripts/validar-documentacao.py`](../scripts/validar-documentacao.py): verifica links internos, imagens e os arquivos `.puml`.
+
+## Regras de manutenção
+
+1. Documente cada funcionalidade junto com o código no mesmo Pull Request.
+2. Atualize roadmap, contrato API, regras e testes, se forem afetados.
+3. Use links relativos para que as imagens apareçam diretamente no GitHub.
+4. Separe *estado atual* de *arquitetura futura* e evite resultados/testes não verificados.
+5. Depois de alterar qualquer `.md`, gere novamente `llms-full.txt` com `python scripts/gerar-llms-full.py` e valide com `python scripts/validar-documentacao.py`.
+
+## Integração contínua
+
+O arquivo [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) valida links internos e confere se `llms-full.txt` acompanha as últimas mudanças sempre que a documentação é alterada em um pull request ou push.
+
+
+---
+
+## Fonte: `docs/planejamento/plano-geral.md`
+
+# Plano do projeto — PulseOps AI
+
+**Documento:** termo de abertura e plano executivo de desenvolvimento.  
+**Versão:** 0.2 (Parte 1) • **Responsável:** mantenedor do repositório.  
+**Status:** planejamento em andamento; protótipo offline e scripts SQL preparados, banco pendente de validação local.
+
+## 1. Resumo e motivação
+
+**Problema:** solicitações e incidentes empresariais dispersos em planilhas e mensagens dificultam priorização, rastreabilidade, gestão de prazos e acompanhamento gerencial.
+
+**Solução proposta:** desenvolver uma plataforma web de chamados com autenticação, fluxo de atendimento, métricas reais e assistência opcional de IA para triagem supervisionada.
+
+**Público-alvo:** solicitantes, analistas de suporte e administradores; visão executiva de KPIs via perfil administrador no MVP.
+
+## 2. Objetivo geral e objetivos específicos
+
+**Objetivo geral:** criar um MVP demonstrável, reproduzível e seguro o suficiente para um ambiente **de desenvolvimento/demonstração**, que percorra o ciclo de vida de um chamado do cadastro à resolução e aos indicadores.
+
+Objetivos verificáveis:
+
+1. Permitir que contas ativas e autorizadas criem, filtrem, atribuam, atualizem e resolvam chamados.
+2. Implementar regras de SLA e histórico das mudanças na API e no PostgreSQL.
+3. Substituir os dados estáticos do protótipo por informações reais da API.
+4. Produzir e documentar testes de integridade, domínio, integração e segurança de acesso.
+5. Disponibilizar instruções de execução e um vídeo com um fluxo de ponta a ponta usando **dados fictícios**.
+6. Caso a integração de IA seja feita, exigir validação humana e apresentar resultados medidos, não presumidos.
+
+## 3. Entregas principais e critérios de aceite
+
+| Entregável | Resultado verificável | Estado atual |
+|---|---|---|
+| Documento de visão, requisitos e arquitetura | Markdown revisável + diagramas | Preparado |
+| Modelo de dados e SQL | Scripts de 8 tabelas, views, seed e testes | Preparado; execução local pendente |
+| Ambiente PostgreSQL | `docker compose up -d` + smoke tests | Preparado; execução local pendente |
+| Interface navegável de demonstração | Abre no navegador e utiliza dados fictícios | Disponível offline |
+| API FastAPI | Rotas versionadas, schemas e documentação Swagger | Planejado |
+| Fluxos autenticados | Permissões aplicadas no servidor e histórico atômico | Planejado |
+| Front-end React integrado | Criar/listar/atualizar chamados no banco | Planejado |
+| Indicadores reais | Métricas conferidas contra SQL | Planejado |
+| IA com aprovação humana | Sugestão registrada, aprovada/rejeitada explicitamente | Planejado |
+| Publicação e CI | Testes automatizados, deploy e README reproduzível | Planejado |
+
+## 4. Escopo
+
+**Dentro do MVP:** autenticação, permissões por perfil, CRUD controlado de chamados, comentários, histórico, SLA por horas corridas, dashboard, API REST, testes e documentação; IA de triagem como última melhoria funcional.
+
+**Fora do MVP:** sistema multiempresa, aplicação móvel nativa, integração com clientes reais, anexos e SSO, SLA com calendário comercial, execução automática de ações propostas por IA.
+
+## 5. Premissas, restrições e dependências
+
+- Desenvolvimento individual ou equipe pequena; estimativas semanais são **referências adaptáveis**, não prazos garantidos.
+- Disponibilidade de VS Code, Git e Docker Desktop para banco local.
+- Banco e dados de teste não devem conter informações pessoais reais.
+- Custos de hospedagem e provedores de LLM podem mudar; escolher opções e limites antes de ativá-los.
+- A documentação descreve o planejamento; **não demonstra por si só que a implementação está concluída**.
+
+Dependências críticas: validar PostgreSQL antes da API; construir autenticação/CRUD antes de conectar React; ter fluxo básico funcional antes da IA; possuir testes mínimos antes de deploy.
+
+## 6. Estratégia de execução
+
+Dividir as atividades em issues pequenas num quadro Kanban; usar branches temáticas e PRs; aplicar a definição de pronto em cada sprint; priorizar P0 (essencial) e só então P1/P2 (aprimoramentos). Ver [roadmap detalhado](roadmap-e-sprints.md).
+
+```mermaid
+flowchart LR
+    P1[1. Planejar + modelar] --> P2[2. API + autenticação]
+    P2 --> P3[3. React + integração]
+    P3 --> P4[4. Indicadores]
+    P4 --> P5[5. IA supervisionada]
+    P5 --> P6[6. Testes finais + deploy]
+```
+
+## 7. Indicadores de sucesso do projeto
+
+Não há valores de desempenho medidos nesta fase. As metas abaixo são **critérios de entrega**, e não resultados alcançados:
+
+- **Reprodutibilidade:** outro desenvolvedor consegue subir o banco e rodar o fluxo seguindo o README.
+- **Qualidade:** testes críticos passam localmente e no pipeline quando for configurado.
+- **Rastreabilidade:** mudanças relevantes incluem histórico e documentação atualizada.
+- **Segurança funcional:** perfil solicitante não acessa chamados alheios nem comentários internos.
+- **Demonstração:** vídeo reproduz um caso completo com dados de exemplo e explica limites conhecidos.
+
+## 8. Riscos prioritários
+
+1. **Escopo excessivo:** liberar MVP de chamados e indicadores antes de acrescentar IA.
+2. **Divergência SQL/ORM:** estabelecer baseline de migração antes de introduzir mudanças.
+3. **Exposição de segredos:** manter `.env` fora do Git e revisar alterações antes do push.
+4. **Resultados não validados:** não declarar banco, testes, deploy ou IA como concluídos sem execução e evidência.
+
+Detalhes, probabilidade e mitigação: [riscos e decisões](riscos-e-decisoes.md).
+
+## 9. Próxima ação concreta
+
+Executar o projeto num computador com Docker Desktop e registrar o resultado do script `scripts/testar-banco.ps1`. Se estiver OK, abrir issues da Sprint 2 para FastAPI, migrações, autenticação e CRUD. Caso o teste falhe, corrigir esquema/Compose antes de avançar.
+
+## 10. Documentos complementares
+
+[Índice geral](../00-indice.md) · [Arquitetura](../arquitetura/arquitetura.md) · [Requisitos](../requisitos/requisitos-e-historias.md) · [Modelo de dados](../banco-de-dados/modelagem.md) · [Contrato de API](../api/contrato-api.md) · [Plano de testes](../testes/plano-de-testes.md) · [Padrões de Git](../contribuicao/git-e-commits.md)
+
+## Documentação UML para a implementação
+
+O escopo tem diagramas **editáveis em PlantUML** de casos de uso, classes, duas sequências, componentes, implantação e estados; [veja a galeria](../uml/README.md). Estes modelos serão usados nas revisões de Sprint 2/3/5 para manter o código alinhado aos requisitos.
+
+
+---
+
+## Fonte: `docs/planejamento/visao-do-produto.md`
+
+# PulseOps AI — Visão do Produto (Parte 1)
+
+## Problema
+Empresas recebem incidentes por e-mail, chat e planilhas, o que dificulta priorização, acompanhamento, medição de atrasos e visão gerencial. Sistemas isolados tornam demoradas as respostas e as análises.
+
+## Proposta de valor
+
+![Interface de demonstração do PulseOps AI](../imagens/dashboard-preview.png)
+
+*Captura do protótipo offline com dados fictícios — não é a aplicação final integrada.*
+Uma plataforma web para abertura, encaminhamento, acompanhamento e análise de chamados operacionais, com indicadores e sugestões de IA supervisionadas por pessoas.
+
+## Público-alvo
+- **Solicitante:** cria um chamado, consulta andamento, escreve comentários.
+- **Analista:** atende chamados, altera status e prioridade de acordo com permissões, registra comentários internos e valida sugestões da IA.
+- **Administrador:** gerencia categorias, políticas de SLA, departamentos e perfis de acesso.
+- **Gestor (visão futura):** acompanha KPIs agregados, sem necessariamente editar chamados. Na versão 1, a visualização administrativa será usada para isso.
+
+## Metas da primeira versão (MVP)
+1. Permitir login seguro e autorização por função.
+2. Abrir, listar, filtrar e atualizar chamados.
+3. Registrar responsável, solicitante, departamento, categoria, prioridade, datas e histórico de mudanças.
+4. Calcular prazos em horas corridas conforme prioridade e marcar SLA vencido.
+5. Exibir totais, status, distribuição por prioridade/categoria, taxa de atrasos e tempo médio para resolução.
+6. Gerar sugestões de triagem e resumos por IA, sempre com aprovação humana.
+7. Expor API REST documentada e disponibilizar aplicação em ambiente de demonstração.
+
+## Fora do escopo do MVP
+- Multi-tenant (várias empresas isoladas no mesmo banco).
+- Aplicativo móvel nativo.
+- Integração real com ERP e sistemas de clientes.
+- Escalação automática de incidentes sem supervisão.
+- SLA que considera feriados e horário comercial (fase futura).
+- Upload de anexos, notificações por e-mail e SSO corporativo (fase futura).
+
+## Indicadores e fórmulas
+- **Pendentes:** status aberto, em_triagem ou em_atendimento.
+- **Concluídos:** status resolvido ou fechado.
+- **Fora do SLA:** pendentes vencidos ou concluídos após `due_at`.
+- **Tempo médio de resolução (horas):** média de `resolved_at - opened_at` para chamados resolvidos/fechados.
+- **Cumprimento de SLA:** concluídos dentro do prazo / concluídos com prazo definido, em porcentagem.
+
+## Regras de segurança e IA
+- Nunca armazenar senha em texto puro; usar hash seguro (Argon2id recomendado).
+- A autorização deve ser validada NO BACKEND em toda operação.
+- Chamados de exemplo devem usar dados fictícios, sem dados sensíveis.
+- Saída do LLM é proposta, não decisão: analista aprova ou rejeita.
+- Evitar enviar dados pessoais ou credenciais de chamados para provedores externos de IA.
+- Salvar quem aprovou a sugestão, quando aprovou e qual conteúdo foi sugerido.
+
+## Critérios de sucesso de portfólio
+- Demonstração reproduzível em máquina nova.
+- README com imagens, instruções de instalação e arquitetura.
+- Testes automatizados para rotas críticas e regras de negócio.
+- Histórico de commits no GitHub com documentação técnica e decisões de projeto.
+- Vídeo com o fluxo: registrar problema > analisar > encaminhar > resolver > dashboard.
+
+## Etapas do plano
+- **Semana 1:** planejamento + dados + arquitetura + protótipo visual (este pacote).
+- **Semana 2:** FastAPI, autenticação e endpoints de chamados.
+- **Semana 3:** React/TypeScript e telas consumindo a API.
+- **Semana 4:** métricas reais, consultas e relatórios.
+- **Semana 5:** integração de IA com revisão humana.
+- **Semana 6:** testes, CI, Docker completo, deploy e apresentação.
+
+
+---
+
+## Fonte: `docs/requisitos/requisitos-e-historias.md`
+
+# Requisitos e histórias de usuário
+
+> **Estado da documentação:** Requisitos e critérios de aceite para orientar a implementação; funcionalidades futuras não devem ser descritas como entregues.
+
+## Histórias priorizadas
+
+![Jornada de atendimento de um chamado](../imagens/03-fluxo-chamado.png)
+| ID | Perfil | História | Critério de aceite | Prioridade |
+|---|---|---|---|---|
+| US-01 | Solicitante | Quero abrir um chamado | Título, descrição e categoria obrigatórios; ID gerado no banco | P0 |
+| US-02 | Solicitante | Quero listar meus chamados | Listagem filtrada pelo usuário autenticado | P0 |
+| US-03 | Analista | Quero ver a fila de atendimento | Filtrar por status, prioridade, categoria e responsável | P0 |
+| US-04 | Analista | Quero atualizar status e responsável | Mudança autorizada; histórico registrado | P0 |
+| US-05 | Admin | Quero gerenciar prioridade e prazo | Política de SLA aplicada ao criar/alterar prioridade | P1 |
+| US-06 | Analista | Quero comentar em chamados | Comentário guarda autor e data; interno não aparece a solicitantes | P1 |
+| US-07 | Admin | Quero ver painel de indicadores | KPIs calculados com dados reais do banco | P1 |
+| US-08 | Analista | Quero sugestão de triagem pela IA | Sugestão mostrada como pendente e nunca aplicada sem aprovação | P2 |
+| US-09 | Admin | Quero relatório exportável | Download CSV com filtros ativos | P2 |
+
+## Requisitos não funcionais
+- **RNF-01 Segurança:** validações no servidor, senhas em hash, autorização por perfil, segredo fora do Git.
+- **RNF-02 Performance:** paginação na listagem; índices em campos pesquisados com frequência.
+- **RNF-03 Qualidade:** testes de regras de negócio e execução automatizada na CI.
+- **RNF-04 Observabilidade:** logs de erro sem senhas/tokens e histórico de ações de chamados.
+- **RNF-05 Confiabilidade:** persistência PostgreSQL com backups na etapa de implantação.
+- **RNF-06 Usabilidade:** interface responsiva, contraste adequado, estados de erro e sucesso acessíveis.
+- **RNF-07 Privacidade:** dados fictícios em demos; limitar armazenamento e envio externo de dados.
+
+## Regras funcionais detalhadas
+1. Um chamado tem um solicitante, uma categoria, um status e uma prioridade obrigatórios.
+2. Uma atribuição para analista é opcional no momento da criação.
+3. Um chamado pode receber múltiplos comentários, registros de histórico e sugestões da IA.
+4. Chamados resolvidos/fechados devem registrar data de resolução; os fechados também data de fechamento.
+5. O SLA inicial considera horas corridas: crítica 1h; alta 4h; média 24h; baixa 72h.
+6. Se `resolved_at > due_at`, foi concluído fora do prazo. Se aberto e `NOW() > due_at`, está atrasado.
+7. A API calculará `due_at` a partir da política de SLA; o banco mantém `NULL` temporariamente para suportar migrações/legado.
+8. Trocas de status, responsável ou prioridade gerarão eventos em `ticket_history` implementados na semana 2.
+9. Apenas analistas/admins aprovam sugestões de IA, e isso deve ser registrado com usuário e data.
+10. Contas fictícias da seed permanecem desativadas; contas reais serão cadastradas de forma segura.
+
+## Critério de conclusão da Parte 1
+- [x] Visão do produto definida.
+- [x] Histórias de usuário e limites do MVP definidos.
+- [x] Modelo entidade-relacionamento documentado.
+- [x] Esquema SQL, índices, checks e chaves estrangeiras escritos.
+- [x] Dados demonstrativos e consultas preparadas.
+- [x] Docker Compose de banco preparado.
+- [x] Protótipo navegável (offline, sem backend) criado.
+- [ ] Banco executado e testes integridade confirmados no computador do desenvolvedor.
+
+
+---
+
+## Fonte: `docs/requisitos/regras-de-negocio.md`
+
+# Regras de negócio e fluxos do chamado
+
+**Status:** contrato de negócio definido para implementação em FastAPI. Algumas restrições de consistência já estão no arquivo SQL; as regras de autorização e a maioria das transições dependerão da API.
+
+## 1. Papéis e autorização
+
+| Operação | Solicitante | Analista | Admin |
+|---|---|---|---|
+| Criar chamado | Sim | Sim | Sim |
+| Visualizar chamado próprio | Sim | Sim | Sim |
+| Visualizar chamados de outros | Não | Sim (fila autorizada) | Sim |
+| Alterar status, prioridade ou responsável | Não | Sim | Sim |
+| Comentar publicamente em chamado acessível | Sim | Sim | Sim |
+| Ler/criar comentário interno | Não | Sim | Sim |
+| Aprovar ou rejeitar sugestão da IA | Não | Sim | Sim |
+| Alterar categorias e políticas de SLA | Não | Não | Sim |
+| Consultar dashboard agregado | Não (MVP) | Sim | Sim |
+
+Um solicitante só pode consultar seus próprios registros; um `404` genérico é apropriado para impedir descoberta de IDs não acessíveis. O servidor valida cada operação, mesmo que a UI esconda botões.
+
+## 2. Campos obrigatórios
+
+- `tickets.title`: até 180 caracteres, não vazio.
+- `tickets.description`: texto não vazio, com limite de tamanho definido na API.
+- `tickets.requester_id`: **extraído do token**, nunca aceito livremente de um usuário solicitante.
+- `tickets.category_id`: categoria existente e ativa.
+- `tickets.priority`: `baixa`, `media`, `alta`, `critica`; valor inicial `media` se omitido.
+- `tickets.status`: inicial `aberto`.
+- `tickets.assignee_id`: opcional e, quando informado, precisa representar usuário ativo com permissão de atendimento.
+
+O SQL já exige os campos essenciais e restringe prioridade/status; validações de perfil, categoria ativa e tamanho máximo da descrição são **futuras**.
+
+## 3. Estados e transições propostas
+
+![Fluxo planejado do atendimento de um chamado](../imagens/03-fluxo-chamado.png)
+
+```mermaid
+stateDiagram-v2
+    [*] --> aberto
+    aberto --> em_triagem
+    aberto --> em_atendimento
+    em_triagem --> em_atendimento
+    em_atendimento --> resolvido
+    resolvido --> fechado
+    resolvido --> em_atendimento: reabertura revisada
+    fechado --> [*]
+```
+
+- **MVP recomendado:** transições acima; não mudar diretamente de `aberto` para `fechado`.
+- Fechamento é terminal no MVP. Reabertura de um item fechado pode virar nova solicitação vinculada em versão futura.
+- Ao entrar em `resolvido`, gravar `resolved_at`; em `fechado`, `closed_at`; ao reabrir, definir política explícita para novo tempo de resolução antes de implementar (há impacto sobre SLA e métricas).
+- O banco existente garante que registros resolvidos tenham `resolved_at` e fechados tenham também `closed_at`, mas **não garante o grafo de transições**; isso caberá ao serviço e aos testes.
+
+## 4. SLA (horas corridas no MVP)
+
+| Prioridade | Minutos | Prazo ilustrativo |
+|---|---:|---|
+| `critica` | 60 | 1 hora |
+| `alta` | 240 | 4 horas |
+| `media` | 1.440 | 24 horas |
+| `baixa` | 4.320 | 72 horas |
+
+**Regra planejada:** `due_at = opened_at + resolution_minutes` da prioridade escolhida, comparando instantes com fuso. Para mudança de prioridade, recomendamos **recalcular sempre a partir do `opened_at`**, registrar os valores anterior/novo em `ticket_history` e nunca estender silenciosamente o prazo por atualizar a tarefa. Essa escolha precisa ser confirmada antes da API entrar em uso.
+
+**Classificações:**
+
+- `sem_prazo`: `due_at` vazio (legado/importação; não ideal para novos chamados).
+- `em_dia`: não resolvido e agora ainda não passou de `due_at`.
+- `atrasado`: não resolvido e `NOW() > due_at`.
+- `dentro_do_prazo`: resolvido com `resolved_at <= due_at`.
+- `fora_do_prazo`: resolvido com `resolved_at > due_at`.
+
+Essas classificações já são expressas pela **view SQL preparada** `v_ticket_sla`, embora a validação de execução no Docker esteja pendente.
+
+## 5. Comentários e histórico
+
+- Comentários têm autor, chamado, conteúdo, data e flag `is_internal`.
+- Comentários internos jamais aparecem nas respostas para solicitantes.
+- A cada criação ou alteração relevante: emitir um evento em `ticket_history` com `action`, ator, antes/depois e data.
+- Histórico operacional deve ser tratado como imutável na API; não oferecer edição ou exclusão por endpoints públicos.
+- **Atenção:** no SQL inicial, relacionamentos com chamados em comentários/histórico usam `ON DELETE CASCADE`. Por preservação de trilha, o produto não deverá disponibilizar exclusão física de chamados; rever esse desenho antes de um ambiente de produção.
+
+## 6. Revisão de IA
+
+1. O analista solicita uma sugestão; o backend elimina informações desnecessárias e envia uma entrada limitada ao provedor.
+2. A resposta é validada contra categorias/prioridades existentes e salva em `ai_suggestions` com `review_status='pendente'`.
+3. A IA **não** altera o chamado automaticamente.
+4. Analista/admin aprova ou rejeita, identificando `reviewed_by_id` e `reviewed_at`.
+5. Ao aprovar, o serviço poderá aplicar a categoria/prioridade validada dentro de transação e registrar a decisão humana no histórico.
+6. Erro, timeout ou retorno inválido do modelo não pode impedir triagem manual.
+
+## 7. Exemplos de aceite
+
+- Um solicitante autenticado não consegue abrir um ticket com `requester_id` de outra pessoa.
+- Um solicitante não vê comentários marcados como internos.
+- Uma prioridade `urgente` (fora do domínio) deve ser rejeitada.
+- Resolver um ticket grava `resolved_at` e evento de histórico atomicamente.
+- Recomendação de IA `pendente` não modifica `tickets.priority`.
+- Ticket criado com prioridade `alta` deve ter prazo calculado em 240 minutos corridos.
+
+## Diagramas UML complementares
+
+O fluxo de estados está disponível como [PlantUML editável](../uml/diagramas/07-estados-chamado.puml) e com [prévia PNG](../uml/imagens/07-estados-chamado.png). A [sequência de triagem com IA](../uml/diagramas/04-sequencia-triagem-ia.puml) torna explícita a revisão humana obrigatória. Confira o [guia UML](../uml/README.md).
+
+
+---
+
+## Fonte: `docs/arquitetura/arquitetura.md`
+
+# Arquitetura de software — PulseOps AI
+
+> **Estado da documentação:** Arquitetura-alvo planejada; a Parte 1 contém protótipo HTML/CSS/JS offline e infraestrutura SQL/Docker preparada, sem API, React ou integração de IA.
+
+**Tipo:** monólito modular para MVP · **Status:** arquitetura-alvo proposta; back-end e integração ainda não implementados.
+
+## 1. Contexto e restrições
+
+O PulseOps AI centralizará chamados internos, seus responsáveis e indicadores operacionais em uma aplicação web. Prioridades: simplicidade para um portfólio individual, facilidade de teste, auditabilidade e possibilidade de evoluir sem criar microsserviços prematuramente.
+
+**Agora:** `prototype/` roda localmente com dados fictícios, e `db/` contém scripts SQL. **Futuramente:** React consumirá uma API FastAPI que acessará PostgreSQL e, sob demanda, um provedor externo de IA.
+
+## 2. Diagrama de contexto (arquitetura-alvo)
+
+```mermaid
+flowchart LR
+    U[Solicitante, analista ou admin] -->|HTTPS| UI[Frontend React + TypeScript]
+    UI -->|JSON / REST + token| API[API FastAPI]
+    API -->|SQL transacional| PG[(PostgreSQL)]
+    API -->|texto mínimo necessário| LLM[Provedor de IA externo]
+    LLM -->|sugestão, sem alteração automática| API
+    API -->|resposta e status| UI
+```
+
+**Limites de confiança:** navegador não é confiável; autenticação/autorização ocorrem no servidor. O provedor de IA é um terceiro; saída do modelo é conteúdo não confiável até a validação e a revisão humana.
+
+## 3. Camadas planejadas
+
+| Camada | Responsabilidade | Stack proposta |
+|---|---|---|
+| Apresentação | Formulários, tabela, filtros, KPI, UX | React, TypeScript |
+| Transporte/API | Rotas, esquemas de entrada/saída, autenticação, erros | FastAPI, Pydantic |
+| Aplicação | Casos de uso: abrir, atribuir, resolver, revisar sugestão | Serviços Python |
+| Domínio | Regras de status, SLA, perfis, permissões e invariantes | Funções/classes testáveis |
+| Persistência | Consultas e transações, histórico, migrações | SQLAlchemy + Alembic + PostgreSQL |
+| Integrações | Cliente HTTP de IA encapsulado; timeouts e configuração | Adaptador de LLM (futuro) |
+
+### Estrutura proposta (não criada ainda)
+
+```text
+backend/
+├── app/
+│   ├── main.py
+│   ├── api/v1/          # routers e dependências
+│   ├── core/            # configurações, autenticação, permissões
+│   ├── models/          # modelos ORM
+│   ├── schemas/         # Pydantic request/response
+│   ├── services/        # casos de uso, SLA, triagem
+│   ├── repositories/    # acesso a dados
+│   └── integrations/    # API de IA
+├── alembic/             # migrações versionadas
+└── tests/
+frontend/
+├── src/components/
+├── src/pages/
+├── src/services/        # cliente HTTP tipado
+└── src/types/
+```
+
+A separação evita colocar SQL e regras de permissão diretamente nos routers. O módulo de IA pode ser substituído por simulador nos testes.
+
+## 4. Fluxos principais (propostos)
+
+### Abertura de chamado
+
+```mermaid
+sequenceDiagram
+    actor S as Solicitante
+    participant F as Frontend
+    participant A as API / serviço de chamados
+    participant D as PostgreSQL
+    S->>F: Preenche formulário
+    F->>A: POST /api/v1/tickets
+    A->>A: Autentica, autoriza e valida campos
+    A->>D: Consulta política SLA por prioridade
+    A->>A: Calcula due_at em UTC
+    A->>D: Transação: insere ticket + histórico
+    D-->>A: ID e dados persistidos
+    A-->>F: 201 + chamado
+    F-->>S: Confirmação e número do chamado
+```
+
+### Sugestão de IA com revisão humana (Parte 5)
+
+```mermaid
+sequenceDiagram
+    actor A as Analista
+    participant API as API
+    participant L as LLM externo
+    participant DB as PostgreSQL
+    A->>API: Solicita triagem de um chamado
+    API->>API: Aplica controle de acesso e minimiza dados
+    API->>L: Envia texto sanitizado
+    L-->>API: Categoria, prioridade, resumo e justificativa
+    API->>API: Valida formato/valores retornados
+    API->>DB: Registra ai_suggestions (pendente)
+    API-->>A: Exibe recomendação sem aplicá-la
+    A->>API: Aprova ou rejeita
+    API->>DB: Transação: revisão e eventual mudança auditada
+    API-->>A: Resultado da revisão
+```
+
+## 5. Persistência e consistência
+
+- O modelo físico existente possui **8 tabelas**: `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`.
+- `opened_at`, `due_at` e datas de resolução são `TIMESTAMPTZ`; a API deverá trabalhar internamente em UTC e converter para o fuso local na apresentação.
+- Criar chamado + histórico e revisão de sugestão + atualização de chamado devem ser transações atômicas.
+- Índices de busca foram preparados em `db/init/01_schema.sql`. Novos índices serão adicionados com base em consultas reais, não por suposição.
+- No MVP, apenas **uma empresa/instância**; isolamento multiempresa está fora do escopo.
+- **Migrações com Alembic** serão adotadas na Parte 2; os scripts em `db/init/` são apenas o bootstrap de uma base nova.
+
+## 6. Contratos e respostas
+
+- Base sugerida: `/api/v1` (consulte [contrato detalhado](../api/contrato-api.md)).
+- HTTP: `200` consulta/atualização; `201` criação; `400` ou `422` dados inválidos; `401` sem sessão; `403` sem permissão; `404` inexistente/não visível; `409` conflito de estado quando adequado.
+- Listagens paginadas no servidor; nunca fornecer todos os registros por padrão.
+- Retornar erros consistentes, sem stack trace ao usuário. Logs estruturados com `request_id`, sem tokens e descrições sensíveis.
+- Toda rota com dados privados exige autorização no back-end, inclusive `/dashboard`.
+
+## 7. Infraestrutura
+
+**Desenvolvimento nesta Parte 1:** `compose.yaml` inicia apenas PostgreSQL com volume persistente e bind em `127.0.0.1`. O protótipo é arquivo estático independente.
+
+**Objetivo para Parte 6:** contêineres de API e frontend; variáveis por ambiente; HTTPS em hospedagem; health checks; migrations no deploy; cópias de segurança e política de recuperação; CI automatizada no GitHub Actions. Nenhuma dessas operações de produção está configurada nesta entrega.
+
+## 8. Critérios de qualidade arquitetural (metas, não medições)
+
+- Regra de negócio coberta por testes unitários; rotas críticas cobertas por integração.
+- Dados internos jamais retornados a perfis sem acesso.
+- API documentada via OpenAPI e comportamento consistente com a implementação.
+- Configuração por ambiente, sem chaves de API no repositório.
+- A aplicação deve seguir funcional quando a IA estiver indisponível: sugerir manualmente, registrar erro operacional e permitir atendimento humano.
+
+**Decisões e alternativas:** [12-riscos-e-decisoes.md](../planejamento/riscos-e-decisoes.md).
+
+## UML editável: estrutura e comportamento
+
+As propostas de arquitetura e integração também foram documentadas como **PlantUML**, com prévias visuais:
+
+![Componentes da arquitetura-alvo do PulseOps AI](../uml/imagens/05-componentes.png)
+
+![Sequência planejada para abrir um chamado](../uml/imagens/03-sequencia-criar-chamado.png)
+
+Veja [todos os diagramas UML e as fontes `.puml`](../uml/README.md). A implantação e as sequências apresentadas são propostas para as próximas etapas, não recursos executados nesta Parte 1.
+
+
+---
+
+## Fonte: `docs/arquitetura/padroes-de-desenvolvimento.md`
+
+# Padrões de desenvolvimento e colaboração
+
+**Objetivo:** manter histórico legível no GitHub e facilitar avaliação técnica do projeto. Esta é uma convenção escolhida para o PulseOps AI, não um padrão obrigatório da Accenture.
+
+## 1. Organização do Git
+
+- `main`: versão integrada e revisada.
+- Branch por tarefa: `feat/autenticacao`, `feat/crud-chamados`, `docs/arquitetura`, `fix/sla-vencimento`.
+- Pull Request pequeno, ligado à issue; descrever objetivo, alteração, testes e imagens quando houver interface.
+- Nunca reescrever a história pública para simular entregas anteriores.
+- Antes do push: `git status`, `git diff --cached --check`, conferir `.env`, chaves e arquivos ignorados.
+
+## 2. Conventional Commits (proposta)
+
+| Tipo | Uso | Exemplo |
+|---|---|---|
+| `feat` | nova funcionalidade | `feat(tickets): cria endpoint de chamados` |
+| `fix` | correção | `fix(sla): ajusta calculo para UTC` |
+| `docs` | somente texto/diagramas | `docs: adiciona arquitetura e roadmap` |
+| `test` | testes | `test(auth): cobre acesso a ticket alheio` |
+| `refactor` | reestruturação sem comportamento novo | `refactor(api): separa servicos de rotas` |
+| `chore` | manutenção/infra | `chore(ci): configura testes no GitHub Actions` |
+
+Guia com comandos: [05-git-e-commits.md](../contribuicao/git-e-commits.md).
+
+## 3. Convenções de código previstas
+
+- Python: nomes de módulos/funções em `snake_case`, classes `PascalCase`, tipagem estática quando útil; formatador/linter definidos antes de iniciar a API (sugestão: Ruff).
+- TypeScript: nomes de variáveis/funções `camelCase`, componentes React `PascalCase`; tipagem explícita de chamadas API; formatter definido na criação do frontend.
+- Banco: tabelas e colunas em `snake_case`, nomes de migração descritivos; nunca alterar banco persistente apenas editando `db/init/01_schema.sql` depois de inicializado.
+- API: URL com recursos no plural (`/tickets`), versão prefixada (`/api/v1`), nomes JSON consistentes (`snake_case` ou `camelCase`, decidir ao implementar), HTTP sem `200` para erro.
+- Segredos e configuração: `.env` local, variáveis de ambiente na hospedagem, valores de exemplo somente em `.env.example`.
+- Datas: UTC nos serviços; exibição no fuso configurado pela interface; formato ISO 8601 nos contratos.
+
+## 4. Template de Pull Request
+
+```md
+## Objetivo
+Explique a necessidade e indique a issue.
+
+## O que mudou
+- Módulos e comportamentos alterados
+
+## Como validar
+- Comandos executados
+- Cenários testados e resultado observado
+
+## Segurança / dados
+- [ ] Sem credenciais no commit
+- [ ] Permissões avaliadas (quando relevante)
+- [ ] Documentação atualizada
+
+## Evidências
+Captura de tela, request/response ou log sanitizado
+```
+
+## 5. Regras de revisão
+
+- Testes devem verificar comportamento, não só se a função foi chamada.
+- Regras de acesso e alterações de SLA exigem revisão cuidadosa e teste negativo.
+- Não misturar refatoração não relacionada com correção de bug em um mesmo PR.
+- Registrar mudanças de arquitetura no [log de decisões](../planejamento/riscos-e-decisoes.md).
+- Para o portfólio, preferir entregas pequenas reais a um grande commit final sem rastreabilidade.
+
+## 6. Checklist de commit de documentação neste pacote
+
+Se **já** publicou a Parte 1 no GitHub, copie os `.md` novos para `docs/`, substitua o `README.md`/`DOCUMENTACAO.md` e execute na raiz:
+
+```powershell
+git add README.md DOCUMENTACAO.md docs/
+git diff --cached --check
+git commit -m "docs: detalha arquitetura roadmap seguranca e testes"
+git push
+```
+
+Se ainda **não** publicou nada, crie um único commit inicial contendo código e documentação; veja o [guia de Git](../contribuicao/git-e-commits.md).
+
+
+---
+
+## Fonte: `docs/banco-de-dados/modelagem.md`
+
+# Modelagem de dados
+
+## Modelo conceitual (resumo)
+- **Departamento** possui muitos usuários e muitos chamados.
+- **Usuário** abre muitos chamados; um usuário analista pode ser responsável por muitos chamados.
+- **Categoria** classifica muitos chamados.
+- **Chamado** possui muitos comentários, registros de histórico e sugestões de IA.
+- **Usuário** publica comentários, registra ações e aprova sugestões de IA.
+- **Política de SLA** define prazo por prioridade (a correspondência com chamados é pela prioridade, aplicada pela API).
+
+> O desenho editável `diagrama-er.mmd` representa o modelo lógico/físico com PK/FK e cardinalidades. O GitHub renderiza o diagrama Mermaid incluído abaixo.
+
+```mermaid
+ erDiagram
+    departments ||--o{ app_users : possui
+    departments |o--o{ tickets : recebe
+    app_users ||--o{ tickets : solicita
+    app_users |o--o{ tickets : atende
+    categories ||--o{ tickets : classifica
+    tickets ||--o{ ticket_comments : contem
+    app_users ||--o{ ticket_comments : escreve
+    tickets ||--o{ ticket_history : registra
+    app_users |o--o{ ticket_history : executa
+    tickets ||--o{ ai_suggestions : recebe
+    categories |o--o{ ai_suggestions : sugerida
+    app_users |o--o{ ai_suggestions : revisa
+```
+
+## Modelo lógico — oito tabelas
+
+![Diagrama relacional das tabelas e chaves do PulseOps AI](diagramas/diagrama-entidades.png)
+
+**Fonte editável:** [Graphviz DOT](diagramas/diagrama-entidades.dot) · [Mermaid](diagramas/diagrama-er.mmd) · [SVG vetorial](diagramas/diagrama-entidades.svg).
+| Tabela | Chave primária | Principais referências | Finalidade |
+|---|---|---|---|
+| `departments` | `id` | — | Setores organizacionais |
+| `app_users` | `id` | `department_id → departments.id` | Contas e perfis |
+| `categories` | `id` | — | Tipos de chamados |
+| `sla_policies` | `id` | — | Prazo por prioridade |
+| `tickets` | `id` | `requester_id`, `assignee_id → app_users.id`; `department_id`; `category_id` | Registros principais |
+| `ticket_comments` | `id` | `ticket_id → tickets.id`; `author_id → app_users.id` | Conversas |
+| `ticket_history` | `id` | `ticket_id → tickets.id`; `actor_id → app_users.id` | Trilha de auditoria do domínio |
+| `ai_suggestions` | `id` | `ticket_id`; `suggested_category_id`; `reviewed_by_id` | Recomendações supervisionadas |
+
+## Decisões de design
+- Identificadores `BIGINT GENERATED ALWAYS AS IDENTITY` em vez de gerar IDs manualmente.
+- Datas em `TIMESTAMPTZ`, evitando perda de fuso horário.
+- Prioridade e status com restrições `CHECK` no banco. Lista pode migrar para tabelas de domínio futuramente.
+- Exclusão de um chamado pode apagar comentários/histórico relacionados (`CASCADE`); na aplicação a estratégia recomendada é NÃO oferecer exclusão física de chamados em produção, para preservar auditoria.
+- `app_users` em vez de `users` para indicar contas próprias da aplicação.
+- Política de SLA normalizada em tabela separada, com `priority` única; API consulta tabela para definir o prazo do chamado.
+- `v_ticket_sla` calcula a situação temporal; `v_dashboard_kpis` resume indicadores.
+- `ai_suggestions` exige revisão humana para qualquer aprovação/rejeição registrada.
+- Demo não fornece autenticação funcional; o hash fictício foi intencionalmente bloqueado.
+
+## Dicionário resumido do chamado
+- `title`, `description`: título e descrição de incidente.
+- `requester_id`: autor do chamado (obrigatório).
+- `assignee_id`: responsável técnico (opcional).
+- `department_id`: setor (opcional).
+- `category_id`: categoria (obrigatória).
+- `status`: aberto, em_triagem, em_atendimento, resolvido, fechado.
+- `priority`: baixa, media, alta, critica.
+- `opened_at`, `due_at`, `resolved_at`, `closed_at`: ciclo de vida e SLA.
+
+## SQL físico
+Consultar `db/init/01_schema.sql` e `db/init/02_seed_demo.sql`.
+
+## Modelo de classes UML
+
+O [diagrama de classes em PlantUML](../uml/diagramas/02-classes-dominio.puml), com [imagem de prévia](../uml/imagens/02-classes-dominio.png), resume as oito entidades do modelo físico. Ele complementa o DER, mas a definição exata das FKs está em `db/init/01_schema.sql`. Veja [documentação UML](../uml/README.md).
+
+
+---
+
+## Fonte: `docs/api/contrato-api.md`
+
+# Contrato preliminar da API — Semana 2
+
+> **Estado da documentação:** Contrato previsto; nenhum endpoint FastAPI está implementado nesta versão.
+
+![Arquitetura-alvo da API no contexto do sistema](../imagens/02-arquitetura-alvo.png)
+
+*API planejada, ainda não implementada nesta entrega.*
+
+Base local sugerida: `http://localhost:8000/api/v1`.
+
+| Método | Rota | Quem usa | Finalidade |
+|---|---|---|---|
+| POST | `/auth/login` | Público | Autenticação; token de sessão |
+| GET | `/auth/me` | Autenticado | Dados do usuário atual |
+| GET | `/tickets` | Autenticado | Listar com filtros, paginação e restrição de acesso |
+| POST | `/tickets` | Solicitante/analista/admin | Criar chamado; registrar autor do token |
+| GET | `/tickets/{id}` | Autorizado | Detalhar chamado |
+| PATCH | `/tickets/{id}` | Analista/admin | Alterar responsável, prioridade, status; registrar histórico |
+| POST | `/tickets/{id}/comments` | Autorizado | Adicionar comentário |
+| GET | `/categories` | Autenticado | Listar categorias |
+| GET | `/dashboard/kpis` | Analista/admin | Estatísticas agregadas |
+| GET | `/dashboard/by-category` | Analista/admin | Chamados por categoria |
+| POST | `/tickets/{id}/ai-suggestions` | Analista/admin | Pedir sugestão de triagem (Semana 5) |
+| POST | `/ai-suggestions/{id}/review` | Analista/admin | Aprovar ou rejeitar sugestão (Semana 5) |
+
+## Exemplo de criação de chamado (futuro)
+```json
+{
+  "title": "Sistema de vendas fora do ar",
+  "description": "Equipe não consegue registrar os pedidos.",
+  "category_id": 2,
+  "priority": "alta"
+}
+```
+
+## Exemplo da resposta planejada (futuro)
+```json
+{
+  "id": 9,
+  "title": "Sistema de vendas fora do ar",
+  "status": "aberto",
+  "priority": "alta",
+  "due_at": "2026-10-20T20:00:00-03:00"
+}
+```
+
+**Atenção:** estas rotas são uma especificação, **não estão implementadas** nesta Parte 1. O backend FastAPI será iniciado na Parte 2.
+
+
+---
+
+## Fonte: `docs/uml/README.md`
+
+# Diagramas UML com PlantUML — PulseOps AI
+
+> **Estado da documentação:** Diagramas representam a especificação desejada, não classes de código ou serviços já implementados. As imagens são prévias; a renderização oficial pelo PlantUML pode ser feita localmente.
+
+> **Status:** especificação para o MVP; a Parte 1 entrega o protótipo HTML/CSS/JS e os scripts SQL, **não** uma API, front-end React ou IA integrados. Os arquivos `.puml` são fontes editáveis. As prévias SVG/PNG incluídas representam os mesmos fluxos, mas foram desenhadas por ferramentas locais de visualização, **não exportadas por um motor PlantUML** nesta entrega. Depois de instalar o PlantUML, use `scripts/renderizar-uml.ps1` para substituir as prévias por imagens geradas diretamente das fontes.
+
+## Diagramas disponíveis
+
+| Tipo UML | Para que serve | Código editável |
+|---|---|---|
+| Casos de uso | Funções visíveis para solicitante, analista e administrador | [`01-casos-de-uso.puml`](diagramas/01-casos-de-uso.puml) |
+| Classes | Domínio e cardinalidades que refletem as 8 tabelas SQL | [`02-classes-dominio.puml`](diagramas/02-classes-dominio.puml) |
+| Sequência — abrir chamado | Autenticação, SLA e gravação atômica do chamado com histórico | [`03-sequencia-criar-chamado.puml`](diagramas/03-sequencia-criar-chamado.puml) |
+| Sequência — IA | Triagem supervisionada, validação e aprovação/rejeição por pessoa | [`04-sequencia-triagem-ia.puml`](diagramas/04-sequencia-triagem-ia.puml) |
+| Componentes | Fronteiras React, FastAPI, ORM, PostgreSQL e LLM externo | [`05-componentes.puml`](diagramas/05-componentes.puml) |
+| Implantação | Topologia proposta para hospedagem futura | [`06-implantacao.puml`](diagramas/06-implantacao.puml) |
+| Estados | Transições permitidas para um chamado | [`07-estados-chamado.puml`](diagramas/07-estados-chamado.puml) |
+
+## 1. Casos de uso
+
+![UML de casos de uso planejados](imagens/01-casos-de-uso.png)
+
+As permissões definitivas serão aplicadas pelo **back-end**. Detalhes em [regras de negócio](../requisitos/regras-de-negocio.md).
+
+## 2. Classes de domínio
+
+![UML de classes das oito entidades](imagens/02-classes-dominio.png)
+
+O diagrama é um **modelo de domínio** alinhado às tabelas do arquivo [`01_schema.sql`](../../db/init/01_schema.sql), não afirma a existência de classes ORM implementadas. `sla_policies` é buscada pela prioridade, **sem chave estrangeira direta em `tickets`**. Para FKs exatas, consulte o [modelo físico](../banco-de-dados/modelagem.md).
+
+## 3. Sequência de abertura de chamado
+
+![Sequência da criação de chamado](imagens/03-sequencia-criar-chamado.png)
+
+**Plano para Parte 2:** extrair `requester_id` da credencial; validar categoria e SLA; inserir ticket e histórico **na mesma transação**; retornar `201` ou erro controlado. A versão `.puml` contém os caminhos alternativos de erro que não cabem completamente na prévia resumida.
+
+## 4. Sequência de triagem com IA
+
+![Sequência de sugestão da IA e decisão humana](imagens/04-sequencia-triagem-ia.png)
+
+**Plano para Parte 5:** enviar somente dados minimizados; validar saída; salvar sugestão como `pendente`; uma pessoa aprova ou rejeita. **Nenhum campo do chamado deve mudar apenas porque a IA sugeriu algo.** Em falhas, manter triagem manual.
+
+## 5. Componentes
+
+![UML de componentes previstos](imagens/05-componentes.png)
+
+A API será um **monólito modular**; não há necessidade de microsserviços para o MVP.
+
+## 6. Implantação
+
+![UML de implantação futura](imagens/06-implantacao.png)
+
+A topologia é uma proposta. **Não indica hospedagem nem deploy existentes.** Por enquanto o Docker Compose prepara o PostgreSQL para desenvolvimento local.
+
+## 7. Estados do chamado
+
+![UML de estados do chamado](imagens/07-estados-chamado.png)
+
+A passagem `resolvido → em_atendimento` depende da decisão sobre recalcular prazos de SLA em reaberturas. A API terá de bloquear transições inválidas; o esquema SQL isolado não garante todas as transições.
+
+## Como editar e renderizar no VS Code (Windows)
+
+1. Abra qualquer arquivo `.puml` da pasta `docs/uml/diagramas/` com o VS Code. Instale a extensão **PlantUML** de jebbs se desejar pré-visualização no editor.
+2. Tenha **Java** instalado (e **Graphviz** quando o PlantUML exigir para certos diagramas) e obtenha o arquivo `.jar` de uma distribuição oficial do [PlantUML](https://plantuml.com/download). Coloque-o localmente em `tools/plantuml.jar` (essa pasta pode ser criada; o JAR **não está incluído** no ZIP).
+3. No PowerShell, na raiz do projeto, execute:
+
+```powershell
+.\scripts\renderizar-uml.ps1
+```
+
+O script produzirá SVG e PNG em `docs/uml/imagens/` a partir dos arquivos PlantUML; adicione as imagens ao commit junto com as fontes editáveis. Ele exige Java e o JAR PlantUML. Alternativamente, use a opção de exportação da extensão no VS Code.
+
+> Não é necessário enviar suas descrições de chamados para servidores públicos de renderização. A renderização local preserva o conteúdo no computador.
+
+## Manutenção e revisão
+
+- Atualize o `.puml` **no mesmo commit** em que implementar uma mudança relevante de fluxo ou modelo.
+- Depois de gerar as imagens, confira se o Markdown ainda aponta para o arquivo correto.
+- Não trate a modelagem projetada como funcionalidade concluída: atualize o status quando os testes passarem.
+- **Fonte da verdade dos dados:** `db/init/01_schema.sql`. **Fonte das regras propostas:** `docs/requisitos/regras-de-negocio.md`.
+
+
+---
+
+## Fonte: `docs/seguranca/seguranca-e-privacidade.md`
+
+# Segurança e privacidade — projeto de engenharia
+
+**Status:** controles propostos para as Partes 2–6; **não** declarar o projeto seguro para produção com base apenas neste documento.
+
+## 1. Dados e fronteiras de confiança
+
+O sistema lidará com nomes, e-mails, descrições de chamados, histórico de ações e, futuramente, tokens de sessão. Em demonstrações, usar exclusivamente dados fictícios. Não usar incidentes reais de clientes ou credenciais de terceiros.
+
+**Confianças distintas:** navegador → API → banco; API → provedor de IA. Cada transição exige validação/autorização adequada.
+
+## 2. Matriz de ameaças e controles
+
+| Risco | Controle técnico proposto | Verificação |
+|---|---|---|
+| Acesso a ticket alheio (IDOR) | Filtro por solicitante no serviço, verificação por objeto | Testes de `403`/`404` |
+| Senha comprometida | Hash Argon2id com biblioteca adequada, proteção contra brute force | Teste de login e rate limit |
+| Token exposto | Expiração curta, segredo fora do Git, política de armazenamento revisada | Inspeção de cookies/headers/logs |
+| SQL injection | Queries parametrizadas via ORM/SQLAlchemy | Casos adversariais de entrada |
+| XSS no comentário | Escape padrão do framework, nunca renderizar HTML não confiável | Testes com `<script>` como texto literal |
+| Falta de isolamento de funções | Autorização server-side, testes por perfil | Matriz de permissões |
+| Vazamento em logs | Redação de senhas, tokens e corpo sensível; logs mínimos | Revisão de log em falha |
+| Exposição do PostgreSQL | Binding local em dev; rede privada no deploy | Auditoria da configuração |
+| Prompt injection do chamado | Tratar entrada como dados não confiáveis e não dar ferramentas/ações autônomas à IA | Testes de ataques no prompt |
+| Saída de IA incorreta | JSON validado, enum fechado, aprovação humana | Casos de resposta inválida |
+| API de IA indisponível | Timeout, backoff controlado e fallback manual | Teste de indisponibilidade |
+
+## 3. Autenticação, sessões e controle de acesso
+
+- **Planejado:** hash de senhas usando algoritmo de derivação adequado (Argon2id); nunca criptografia reversível nem hash simples.
+- Tokens JWT só serão utilizados após definir expiração, rotação/revogação e forma de armazenamento. Para aplicação web, avaliar cookie `HttpOnly`, `Secure` e `SameSite` e a proteção CSRF correspondente; não tratar JWT como proteção suficiente por si só.
+- Rate limit de login, erros genéricos e registro de tentativas suspeitas sem incluir credenciais.
+- Aplicar autorização por perfil **e** por vínculo ao objeto; UI não substitui verificação de API.
+- Privilégios mínimos para a conta do banco e para a chave da API de IA.
+
+## 4. Segurança de infraestrutura e segredos
+
+- `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
+- `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
+- Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
+- Migrações versionadas e backups antes de alterações destrutivas.
+
+## 5. Privacidade e IA generativa
+
+- Limitar dados pessoais coletados à finalidade de atendimento; estabelecer prazo de retenção e política de exclusão depois de avaliar obrigações aplicáveis.
+- Evitar enviar nome, e-mail, senha, IPs privados, tokens ou conteúdo sensível do chamado ao LLM. Minimizar/pseudonimizar antes da chamada.
+- Informar no produto quando texto for enviado a um provedor externo e revisar os termos de armazenamento/tratamento desse provedor.
+- Registrar modelo utilizado, status de revisão, autor da decisão e timestamp; evitar manter prompts originais com dados sensíveis sem necessidade.
+- Preparar avaliação humana de qualidade e vieses de classificações; IA apoia, não toma decisões finais.
+- A aderência à LGPD exige análise de finalidade, base legal, transparência, contratos e práticas reais; **esta documentação não comprova conformidade legal**.
+
+## 6. Checklist de segurança antes de publicar a aplicação
+
+- [ ] Autenticação funcionando com senhas protegidas e contas demo desabilitadas.
+- [ ] Todas as rotas sensíveis cobertas por testes de permissão.
+- [ ] Campos e arquivos limitados em tamanho; upload não está no MVP.
+- [ ] Nenhum segredo encontrado em histórico de commits ou variáveis versionadas.
+- [ ] HTTPS e cookies/tokens configurados corretamente.
+- [ ] CORS e política de origem revisados.
+- [ ] Logs não armazenam tokens, senhas, PII desnecessária nem payload bruto de IA.
+- [ ] Backups e restauração exercitados.
+- [ ] Dependências e imagens atualizadas e verificadas.
+- [ ] Integração com IA falha de forma segura e revisão humana obrigatória.
+
+
+---
+
+## Fonte: `docs/testes/plano-de-testes.md`
+
+# Estratégia e plano de testes — PulseOps AI
+
+**Separar fatos de metas:** existem scripts SQL de smoke test, mas não há registro de execução do PostgreSQL neste ambiente. Ainda não há FastAPI ou suíte Pytest para executar. O protótipo web é uma demonstração local com dados falsos.
+
+## 1. Níveis de teste planejados
+
+1. **Unitário (futuro):** cálculo SLA, permissões, transições de status, validações e transformação de resposta da IA.
+2. **Integração API/banco (futuro):** endpoints + PostgreSQL isolado, integridade entre tickets e histórico, rollback de transação.
+3. **Contrato API (futuro):** status HTTP, validação de request/response e paginação conforme OpenAPI.
+4. **Frontend (futuro):** formulários, filtros, estados de loading/erro, acessibilidade básica.
+5. **End-to-end (futuro):** login → chamado → atribuição → resolução → alteração no painel.
+6. **Segurança (futuro):** IDOR, privilégios indevidos, limites e entradas adversariais.
+
+## 2. Casos de teste prioritários
+
+| ID | Caso | Esperado | Etapa |
+|---|---|---|---|
+| DB-01 | Base nova com seed | 8 tabelas, dados demo, views criadas | Parte 1 |
+| DB-02 | Prioridade inválida | Restrição do banco rejeita | Parte 1 |
+| DB-03 | Conta fictícia | Seed permanece inativa | Parte 1 |
+| API-01 | Criar chamado válido | HTTP 201, solicitante do token, SLA e histórico | Parte 2 |
+| API-02 | Campo obrigatório ausente | HTTP 422, nenhum registro criado | Parte 2 |
+| AUTH-01 | Solicitante busca chamado alheio | Acesso negado sem dados vazados | Parte 2 |
+| AUTH-02 | Solicitante altera prioridade | Acesso negado | Parte 2 |
+| SLA-01 | Prioridade alta | Prazo = abertura + 240 min | Parte 2 |
+| SLA-02 | Resolução após o prazo | Indicador `fora_do_prazo` | Parte 4 |
+| HIS-01 | Alteração de responsável | Evento de histórico com ator | Parte 2 |
+| UI-01 | Filtros da tabela | Chamados visíveis correspondem aos filtros | Parte 3 |
+| IA-01 | Sugestão pendente | Chamado não é alterado | Parte 5 |
+| IA-02 | Retorno da IA inválido/timeout | Erro controlado, triagem manual disponível | Parte 5 |
+| SEC-01 | Conteúdo malicioso de comentário | Não executar HTML/script no navegador | Parte 3 |
+
+## 3. Como validar a Parte 1 (Windows/PowerShell)
+
+Na raiz do repositório, com Docker Desktop iniciado:
+
+```powershell
+Copy-Item .env.example .env
+# Edite POSTGRES_PASSWORD e salve antes de iniciar
+notepad .env
+docker compose up -d
+docker compose ps
+.\scripts\testar-banco.ps1
+```
+
+Para inspecionar consultas SQL:
+
+```powershell
+Get-Content -Raw 'db/queries/indicadores.sql' | docker compose exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
+```
+
+**Atenção:** os SQL em `db/init/` são executados só na primeira criação do volume. `docker compose down -v` apagará todos os dados do banco local: usar somente para reset intencional da demo.
+
+**Registro sugerido de evidência:** data, ambiente (versão Docker/PostgreSQL), comando, resultado, eventual falha e link para issue. Não atualizar este documento para `testado` sem execução.
+
+## 4. Comandos previstos para testes futuros (ainda não disponíveis)
+
+```powershell
+# Executar depois que a Parte 2 criar o backend e dependências
+cd backend
+python -m pytest -q
+```
+
+A CI do GitHub Actions será configurada na Parte 6 para bloquear merges com lint/testes falhando. São metas, não verificações atuais.
+
+## 5. Critérios de aprovação de release
+
+- Requisitos P0 demonstrados com dados reais de banco de teste.
+- Testes críticos de autorização e persistência passando.
+- Nenhuma falha de segurança crítica conhecida sem mitigação.
+- Documentação alinhada ao funcionamento atual; limitações explícitas.
+- Smoke test reproduzível por outra pessoa, sem credenciais fornecidas pelo autor.
+- Fluxo completo demonstrável e falhas de IA tratadas sem comprometer o suporte manual.
+
+
+---
+
+## Fonte: `docs/planejamento/roadmap-e-sprints.md`
+
+# Planejamento de execução — roadmap e sprints
+
+**Horizonte sugerido:** 6 semanas, ajustável à disponibilidade de estudo. **Modo de trabalho:** tarefas pequenas, issue + branch + Pull Request; demo ao final de cada sprint. **Status observado:** apenas artefatos da Semana 1 foram preparados; teste real do banco permanece pendente.
+
+## Objetivo de cada etapa
+
+| Sprint | Entregável demonstrável | Dependência | Estado |
+|---|---|---|---|
+| 1 — Fundamentos | Requisitos, banco, protótipo e documentação | Nenhuma | Preparada; validar Docker local |
+| 2 — API | Login, controle de acesso e CRUD de chamados em FastAPI | Banco testado | Pendente |
+| 3 — Interface | React + TypeScript consumindo endpoints reais | API estável | Pendente |
+| 4 — Analytics | KPIs SQL, filtros reais e exportação CSV | API + frontend | Pendente |
+| 5 — IA supervisionada | Sugestões com aprovação humana e auditoria | CRUD + controle de acesso | Pendente |
+| 6 — Entrega | Testes automatizados, CI, deploy e vídeo | Funcionalidades essenciais | Pendente |
+
+## Backlog por sprint
+
+### Sprint 1 — Planejar e validar a fundação
+
+- [x] Definir problema, personas, visão do produto e limites do MVP.
+- [x] Escrever histórias US-01 a US-09, critérios de aceite e NFRs.
+- [x] Criar modelo relacional e diagramas das 8 tabelas.
+- [x] Preparar scripts de criação, dados fictícios e consultas SQL.
+- [x] Criar dashboard demonstrativo offline e configuração do Docker.
+- [x] Redigir documentação de arquitetura, segurança, testes e roadmap.
+- [ ] Executar `docker compose up -d` no Windows com Docker Desktop.
+- [ ] Executar `./scripts/testar-banco.ps1` no PowerShell e registrar resultado.
+
+**Demonstração:** abrir `prototype/index.html`, executar consulta à view `v_dashboard_kpis` após validar o banco e mostrar o diagrama ER.
+
+### Sprint 2 — Back-end (prioridade P0)
+
+- [ ] Criar estrutura FastAPI, configuração de ambiente e conexão SQLAlchemy.
+- [ ] Adotar migrações Alembic sem destruir dados da demo.
+- [ ] Implementar criação de usuários habilitados por procedimento seguro; seed permanece inativa.
+- [ ] Implementar autenticação e autorização (`solicitante`, `analista`, `admin`).
+- [ ] Implementar US-01, US-02, US-03 e US-04: endpoints de chamados, listagem paginada e atualização auditada.
+- [ ] Implementar cálculo de SLA na criação; definir política ao alterar prioridade.
+- [ ] Testar permissões de acesso e consistência entre ticket e histórico.
+
+**Demonstração:** Swagger `/docs` mostrando abertura de chamado e fluxo autorizado de atualização; um solicitante não consegue ler chamado alheio.
+
+### Sprint 3 — Front-end
+
+- [ ] Criar projeto React + TypeScript com rotas e estado de autenticação.
+- [ ] Migrar os componentes de `prototype/` para componentes reutilizáveis.
+- [ ] Integrar formulário, listagem, detalhe e atualização à API.
+- [ ] Criar telas de erro, loading, vazios e controles acessíveis.
+- [ ] Definir interface adaptada a celular e desktop.
+
+**Demonstração:** dois usuários com permissões distintas interagindo com os mesmos chamados persistidos.
+
+### Sprint 4 — Indicadores e relatórios
+
+- [ ] Implementar US-05, US-06 e US-07: SLA, comentários e painel com dados do banco.
+- [ ] Implementar filtros por categoria, status, prioridade e período.
+- [ ] Exportar CSV respeitando filtros e permissões (US-09).
+- [ ] Testar consistência de KPIs com consultas SQL independentes.
+
+**Demonstração:** resolver um chamado e observar o KPI alterando após recarregar a tela.
+
+### Sprint 5 — Integração IA supervisionada
+
+- [ ] Integrar um adaptador configurável para API de LLM (possibilitar mock local).
+- [ ] Remover informações desnecessárias do prompt; limitar tamanhos e validar resposta estruturada.
+- [ ] Persistir cada sugestão como `pendente`.
+- [ ] Implementar revisão humana aprovar/rejeitar com histórico.
+- [ ] Cobrir saída inválida, timeout e falha do provedor, sem interromper o atendimento.
+
+**Demonstração:** recomendação aparece separada da decisão real; prioridade não muda até aprovação.
+
+### Sprint 6 — Confiabilidade, entrega e portfólio
+
+- [ ] Configurar CI com lint e testes automatizados.
+- [ ] Executar varredura de segredos/dependências e revisão de permissão.
+- [ ] Criar ambiente de demonstração HTTPS com dados fictícios.
+- [ ] Revisar README, licenças das dependências e documentação das rotas reais.
+- [ ] Gravar vídeo de 2–3 minutos com cenário de ponta a ponta.
+- [ ] Publicar capturas e registrar indicadores **medidos**, nunca inventados.
+
+## Fluxo no GitHub Projects
+
+**Colunas:** `Backlog` → `Ready` → `In progress` → `In review` → `Done`.
+
+**Campos sugeridos:** `Sprint`, `Prioridade (P0/P1/P2)`, `Módulo`, `Estimativa`, `Responsável`, `Status`. **Labels de issues:** `documentation`, `database`, `backend`, `frontend`, `security`, `ai`, `tests`, `good-first-issue`.
+
+**Exemplo de issue:**
+
+```md
+## Tarefa
+Implementar POST /api/v1/tickets
+
+## História vinculada
+US-01
+
+## Critérios de aceite
+- [ ] Token válido e solicitante obtido da sessão
+- [ ] Campos obrigatórios validados
+- [ ] Prazo calculado pela política de SLA
+- [ ] Ticket e evento de histórico criados na mesma transação
+- [ ] Testes de sucesso, validação e acesso proibido
+
+## Dependências
+Conexão de banco e autenticação prontas
+```
+
+## Definição de pronto (DoD)
+
+Uma tarefa só passa para `Done` com: comportamento funcional, critério de aceite atendido, testes relevantes executados, ausência de segredo no commit, documentação atualizada quando necessário, revisão do diff e status real registrado no GitHub. **Checkbox de planejamento não substitui execução nem teste.**
+
+
+---
+
+## Fonte: `docs/planejamento/riscos-e-decisoes.md`
+
+# Riscos, premissas e registros de decisões (ADR)
+
+**Estado:** decisões de projeto adotadas para planejar o MVP. Itens marcados como proposta não significam código implementado.
+
+## 1. Premissas
+
+- MVP de **empresa única**, com registros demonstrativos fictícios.
+- Equipe de desenvolvimento pequena/individual, recursos computacionais locais, orçamento restrito.
+- SLA em **horas corridas**, sem feriados e dias úteis na versão inicial.
+- A IA oferece recomendações; um usuário autorizado mantém o controle.
+- O protótipo HTML atual não é a interface final nem usa API.
+
+## 2. Registro de riscos
+
+| ID | Risco | Probabilidade / Impacto | Mitigação e gatilho |
+|---|---|---|---|
+| R-01 | Escopo grande impede conclusão | Alta / Alta | Priorizar P0, adiar IA avançada; demo mínima na Sprint 2–3 |
+| R-02 | Diferença entre documentação e implementação | Média / Alta | Atualizar docs no PR, marcar planos vs feitos |
+| R-03 | Falha de ambiente Docker/PostgreSQL | Média / Média | Testar seed e smoke tests cedo; registrar versões |
+| R-04 | Acesso indevido a chamados | Média / Alta | Autorização por recurso, testes negativos por perfil |
+| R-05 | Vazamento de dados à IA externa | Média / Alta | Dados fictícios, minimização e revisão de política do provedor |
+| R-06 | Saída incorreta/alucinada da IA | Alta / Média | Schema fechado, revisão humana, sem execução automática |
+| R-07 | SLA incorreto por data/fuso | Média / Alta | UTC interno, testes de limites, documentar regra de alteração |
+| R-08 | Dependência excessiva da API de IA | Média / Média | Adaptador/mocks, timeout, fallback manual |
+| R-09 | Deploy sem segurança | Média / Alta | Checklist de release e bloqueio de publicação até testes mínimos |
+
+Revisar riscos por sprint, atualizando **status, impacto e evidências** (issues/PRs).
+
+## 3. Decisões arquiteturais (ADR)
+
+### ADR-001 — Monólito modular no MVP
+
+- **Status:** aceito para planejamento (2026-10-20).
+- **Contexto:** pequeno projeto de portfólio, sem requisitos comprovados de escala horizontal entre módulos.
+- **Decisão:** uma API FastAPI organizada em camadas e módulos, em vez de diversos microsserviços.
+- **Consequências:** reduz operação e facilita testes; serviços só serão separados se surgir necessidade mensurável.
+
+### ADR-002 — PostgreSQL como base relacional
+
+- **Status:** aceito para Parte 1.
+- **Contexto:** entidades ligadas, consultas de indicadores, chaves estrangeiras e transações.
+- **Decisão:** PostgreSQL 17 com `TIMESTAMPTZ`, restrições e índices; SQLAlchemy/Alembic planejados.
+- **Alternativa:** SQLite, suficiente para demonstração simples, mas com menor equivalência ao uso empresarial multiusuário pretendido.
+- **Consequência:** requer Docker/configuração local, em troca de SQL e integridade fortes.
+
+### ADR-003 — React + TypeScript e FastAPI
+
+- **Status:** proposto; implementação pendente.
+- **Decisão:** interface baseada em componentes tipados e API Python separada.
+- **Razão:** demonstrar desenvolvimento full-stack, documentação OpenAPI e uso de Python para análises futuras.
+- **Consequência:** duas bases de código e mais ferramentas de build/teste; protótipo atual será migrado.
+
+### ADR-004 — IA human-in-the-loop
+
+- **Status:** aceito como requisito; implementação pendente.
+- **Decisão:** persistir recomendação de IA em estado `pendente`; somente pessoa autorizada pode aplicá-la.
+- **Razão:** reduzir risco operacional, permitir auditoria e demonstrar controle humano.
+- **Consequência:** fluxo adiciona uma etapa, mas evita ações silenciosas por saída de modelo.
+
+### ADR-005 — Regra inicial de SLA
+
+- **Status:** parcialmente decidido; validar antes da API.
+- **Decisão atual:** usar minutos corridos a partir de `opened_at` e política da prioridade.
+- **Questão aberta:** ao mudar prioridade, recalcular prazo a partir da abertura, guardar o prazo original e registrar alteração? **Proposta inicial:** recalcular a partir da abertura e auditar mudança.
+- **Consequência:** simples e determinístico, mas não contempla jornadas comerciais e escalonamentos complexos.
+
+### ADR-006 — Controle de histórico
+
+- **Status:** recomendação para implementação.
+- **Decisão:** excluir fisicamente tickets não será permitido via API; mudanças relevantes gravam histórico na mesma transação.
+- **Ponto de atenção:** `ON DELETE CASCADE` já existe em algumas FKs da base preparada e deve ser revisado se houver requisitos formais de retenção/auditoria.
+
+## 4. Modelo para novas decisões
+
+```md
+### ADR-00X — Título da decisão
+- Status: proposto | aceito | substituído
+- Contexto: qual problema estamos resolvendo?
+- Alternativas: o que foi considerado?
+- Decisão: qual opção foi escolhida?
+- Consequências: vantagens, custos e riscos.
+- Referências: issue/PR e data.
+```
+
+**Princípio:** preferir justificar decisões com critérios verificáveis, sem afirmar que toda escolha representa uma exigência específica da Accenture.
+
+
+---
+
+## Fonte: `docs/arquitetura/galeria-visual.md`
+
+# Galeria visual — PulseOps AI
+
+> **Objetivo:** tornar a documentação compreensível diretamente no GitHub. Diagramas mostram a arquitetura **planejada** quando indicado; não representam recursos já concluídos. Todas as figuras podem ser abertas em tamanho maior clicando nelas.
+
+## 1. Interface demonstrativa existente (Parte 1)
+
+![Captura real do protótipo do dashboard](../imagens/dashboard-preview.png)
+
+**Status:** protótipo HTML/CSS/JavaScript funcional com dados fictícios em memória, sem autenticação e sem conexão com PostgreSQL. Fonte em [`../prototype/`](../../prototype).
+
+## 2. Arquitetura realmente disponível agora
+
+![Arquitetura atual, com protótipo independente dos arquivos do banco](../imagens/01-arquitetura-atual.png)
+
+**Status:** código do protótipo disponível; Docker Compose e SQL preparados para validação local. [Fonte DOT](../imagens/01-arquitetura-atual.dot).
+
+## 3. Arquitetura pretendida para o MVP
+
+![Arquitetura-alvo com React, FastAPI, serviços, PostgreSQL e LLM](../imagens/02-arquitetura-alvo.png)
+
+**Status:** planejado. Back-end, frontend React, autenticação e IA não existem nesta versão. [Fonte DOT](../imagens/02-arquitetura-alvo.dot) · [Arquitetura explicada](arquitetura.md).
+
+## 4. Modelo relacional de dados
+
+![Diagrama de banco de dados com oito tabelas](../banco-de-dados/diagramas/diagrama-entidades.png)
+
+**Status:** esquema SQL preparado; validação de execução local pendente. [Fonte DOT](../banco-de-dados/diagramas/diagrama-entidades.dot) · [Fonte Mermaid](../banco-de-dados/diagramas/diagrama-er.mmd) · [SVG](../banco-de-dados/diagramas/diagrama-entidades.svg) · [Modelagem](../banco-de-dados/modelagem.md).
+
+## 5. Fluxo de atendimento de chamados
+
+![Etapas de abertura, triagem, atendimento, resolução e fechamento](../imagens/03-fluxo-chamado.png)
+
+**Status:** regra de negócio planejada para a API FastAPI. [Fonte DOT](../imagens/03-fluxo-chamado.dot) · [Regras](../requisitos/regras-de-negocio.md).
+
+## 6. IA assistiva com decisão humana
+
+![Fluxo da IA desde a requisição até revisão e aplicação auditada](../imagens/04-ia-revisao-humana.png)
+
+**Status:** funcionalidade futura (Parte 5), sem IA ativa na Parte 1. [Fonte DOT](../imagens/04-ia-revisao-humana.dot).
+
+## 7. Roadmap de implementação
+
+![Cronograma de seis etapas com entregáveis](../imagens/05-roadmap.png)
+
+**Status:** apenas a preparação documental da Parte 1 está concluída; teste do PostgreSQL no Docker permanece pendente. [Fonte DOT](../imagens/05-roadmap.dot) · [Sprints](../planejamento/roadmap-e-sprints.md).
+
+## 8. Controles de segurança previstos
+
+![Camadas de segurança planejadas no projeto](../imagens/06-seguranca.png)
+
+**Status:** metas de segurança para o back-end e a implantação. [Fonte DOT](../imagens/06-seguranca.dot) · [Plano de segurança](../seguranca/seguranca-e-privacidade.md).
+
+---
+
+### Como atualizar os diagramas
+
+Os arquivos `.dot` na pasta `docs/imagens/` são as fontes editáveis. Com Graphviz instalado, gere PNG e SVG, por exemplo:
+
+```powershell
+dot -Tpng docs/imagens/02-arquitetura-alvo.dot -o docs/imagens/02-arquitetura-alvo.png
+dot -Tsvg docs/imagens/02-arquitetura-alvo.dot -o docs/imagens/02-arquitetura-alvo.svg
+```
+
+Todos os links das imagens nos arquivos Markdown são **relativos**, por isso funcionam no GitHub quando as pastas são enviadas juntas. Se renomear uma figura, corrija as referências Markdown.
+
+## 9. Modelagem UML com PlantUML
+
+Agora também existem **sete modelos editáveis `.puml`** com prévias PNG e SVG: diagrama de casos de uso, classes, duas sequências, componentes, implantação e estados.
+
+![Sequência de abertura de chamado](../uml/imagens/03-sequencia-criar-chamado.png)
+
+![Diagrama de estados do chamado](../uml/imagens/07-estados-chamado.png)
+
+[Ver galeria completa de UML e os arquivos PlantUML](../uml/README.md). A renderização local oficial das fontes `.puml` pode ser feita com `scripts/renderizar-uml.ps1` após baixar o JAR PlantUML.
+
+
+---
+
+## Fonte: `docs/contribuicao/git-e-commits.md`
+
+# Guia de Git e commits — PulseOps AI (Windows + VS Code)
+
+Este guia explica **como criar seu repositório, registrar a Parte 1 no GitHub e trabalhar com commits nas próximas etapas**.
+
+## 1. O que é um commit?
+
+Um **commit** é um registro versionado de alterações. Idealmente, cada commit representa uma unidade de trabalho compreensível (por exemplo: criação de um endpoint, teste de uma regra ou ajuste da documentação). `git add` prepara alterações; `git commit` grava um registro **local**; `git push` envia commits ao GitHub.
+
+## 2. Criar o repositório local
+
+1. Extraia o ZIP atualizado do PulseOps AI.
+2. Abra o VS Code e selecione **Arquivo > Abrir Pasta > PulseOpsAI-Parte1**.
+3. Abra **Terminal > Novo Terminal** e confirme que está na pasta que contém `README.md`.
+4. Execute no PowerShell:
+
+```powershell
+git --version
+git init -b main
+git status
+```
+
+Se o Git avisar que precisa de uma identidade, configure **seu próprio nome e o e-mail cadastrado no GitHub** (pode usar endereço `noreply` do GitHub para privacidade):
+
+```powershell
+git config --global user.name "SEU NOME"
+git config --global user.email "SEU-EMAIL-DO-GITHUB"
+```
+
+> Nunca coloque sua senha do GitHub nem tokens em commits ou arquivos públicos.
+
+## 3. Registrar a Parte 1 (caminho recomendado)
+
+Como os arquivos da Parte 1 já foram preparados em conjunto, um commit inicial é a forma mais fiel e simples de registrar essa base. Execute:
+
+```powershell
+git add .
+git status
+git diff --cached --check
+git commit -m "feat: adiciona base inicial do PulseOps AI"
+git log --oneline -5
+```
+
+**Confira no `git status`:** `.env` não deve aparecer nos arquivos preparados. Esse arquivo contém sua senha local e já está listado no `.gitignore`. `.env.example` pode ser enviado: ele contém apenas campos de exemplo.
+
+Este primeiro commit contém planejamento, documentação, diagramas, SQL, Docker e protótipo; não significa que as etapas futuras já foram desenvolvidas.
+
+## 4. Criar o repositório no GitHub e enviar
+
+1. Entre em [github.com/new](https://github.com/new) com sua conta.
+2. Nome sugerido: `pulseops-ai`.
+3. Para portfólio, prefira **Public** apenas se o repositório não tiver dados privados, segredos ou materiais de terceiros não autorizados.
+4. **Não marque** “Add a README file”, “Add .gitignore” nem licença nessa criação inicial, pois os arquivos locais já existem.
+5. No terminal do projeto, troque `SEU-USUARIO` pelo seu login do GitHub:
+
+```powershell
+git remote add origin https://github.com/SEU-USUARIO/pulseops-ai.git
+git remote -v
+git push -u origin main
+```
+
+O GitHub pode solicitar autenticação pelo navegador ou gerenciador de credenciais. Não compartilhe credenciais em mensagens ou arquivos.
+
+Se o remote `origin` já existir, confira com `git remote -v`; para corrigir a URL use:
+
+```powershell
+git remote set-url origin https://github.com/SEU-USUARIO/pulseops-ai.git
+```
+
+## 5. Como fazer commits nas próximas partes
+
+Não espere juntar uma semana inteira de código. Faça commits pequenos quando uma mudança estiver funcionando ou quando a documentação da mudança estiver pronta.
+
+**Exemplo para a Parte 2, após criar `backend/`:**
+
+```powershell
+git switch -c feat/backend-inicial
+git add backend/
+git diff --cached --check
+git commit -m "feat(api): cria estrutura inicial do FastAPI"
+git push -u origin feat/backend-inicial
+```
+
+Depois, ao criar os modelos e as rotas:
+
+```powershell
+git add backend/
+git commit -m "feat(api): implementa modelos e CRUD de chamados"
+git push
+```
+
+Ao adicionar testes:
+
+```powershell
+git add backend/
+git commit -m "test(api): cobre criacao e listagem de chamados"
+git push
+```
+
+No GitHub, abra um **Pull Request** de `feat/backend-inicial` para `main`. Após revisar, faça o merge e continue na próxima tarefa.
+
+## 6. Padrão de mensagens de commit
+
+Usaremos uma convenção simples inspirada em *Conventional Commits*:
+
+| Tipo | Quando usar | Exemplo |
+|---|---|---|
+| `feat` | Nova funcionalidade | `feat(tickets): permite criar chamado` |
+| `fix` | Correção de defeito | `fix(sla): corrige calculo de vencimento` |
+| `docs` | Somente documentação | `docs: detalha arquitetura do backend` |
+| `test` | Testes automatizados | `test(db): adiciona testes de integridade` |
+| `refactor` | Melhorias sem alterar comportamento | `refactor(api): separa servicos e rotas` |
+| `chore` | Configuração e manutenção | `chore(ci): configura workflow de testes` |
+
+Prefira mensagens objetivas que expliquem **o que mudou**. Não crie commits fictícios para sugerir uma cronologia de trabalho que não ocorreu.
+
+## 7. Alternativa: commits temáticos da Parte 1
+
+Se **ainda não fez o primeiro commit**, pode separar o pacote em commits por temas para facilitar revisão. Isso apenas divide o conteúdo atual por assunto; não representa etapas realizadas em datas diferentes.
+
+```powershell
+# Planejamento e modelagem
+ git add .gitignore README.md DOCUMENTACAO.md llms.txt llms-full.txt docs/planejamento/ docs/requisitos/ docs/arquitetura/ docs/banco-de-dados/ docs/api/ docs/uml/
+ git commit -m "docs: define requisitos e arquitetura do PulseOps AI"
+
+# Esquema e dados
+ git add db/
+ git commit -m "feat(db): cria esquema relacional e dados demonstrativos"
+
+# Infraestrutura local
+ git add .env.example compose.yaml scripts/
+ git commit -m "chore(docker): prepara PostgreSQL e testes locais"
+
+# Interface inicial
+ git add prototype/ docs/imagens/dashboard-preview.png
+ git commit -m "feat(ui): adiciona prototipo de dashboard offline"
+
+# Guia de Git
+ git add docs/contribuicao/git-e-commits.md
+ git commit -m "docs: inclui guia de commits e publicacao"
+```
+
+Após o último commit, confira `git status` e envie com `git push -u origin main` depois de criar o repositório remoto. **Não use a alternativa temática depois de já ter feito o commit inicial**: nesse caso, continue normalmente com novos commits.
+
+## 8. Comandos úteis para o dia a dia
+
+```powershell
+git status                          # Arquivos alterados e preparados
+git diff                            # Mudancas ainda nao preparadas
+git diff --cached                   # Mudancas do proximo commit
+git log --oneline --graph --all      # Historico compacto
+git branch                          # Branch atual
+git pull --ff-only                  # Atualiza sem merge automatico inesperado
+```
+
+Se aparecer `nothing to commit, working tree clean`, significa que não há alterações pendentes. Se `git` não for reconhecido, instale [Git for Windows](https://git-scm.com/downloads/win), reinicie o VS Code e tente novamente.
+
+Se precisar tirar um arquivo **da área de preparação sem apagá-lo**, use `git restore --staged NOME_DO_ARQUIVO`.
+
+## 9. Checklist antes de dar push
+
+- [ ] `git status` mostra somente arquivos esperados.
+- [ ] `.env`, senhas, tokens e dados pessoais não estão no commit.
+- [ ] `git diff --cached --check` não mostra erros de espaços ou conflitos.
+- [ ] README e documentação descrevem o estado real do projeto.
+- [ ] Testes executados são informados corretamente; testes ainda não executados não são apresentados como aprovados.
+- [ ] Mensagem de commit descreve a alteração.
+
+## Commit recomendado desta reorganização
+
+Se o projeto já está publicado, copie a estrutura nova integralmente para o diretório Git (removendo os arquivos antigos que foram movidos) e confira o `git status` antes de confirmar. **Não basta sobrescrever as pastas:** a reorganização inclui movimentações de arquivos.
+
+```powershell
+git status
+git add -A
+git diff --cached --check
+git diff --cached --stat
+git commit -m "docs: reorganiza documentacao para leitura por LLMs"
+git push origin main
+```
+
+O `git add -A` registra os arquivos movidos e as exclusões dos caminhos antigos. Antes do commit, confira se arquivos locais confidenciais não foram incluídos.

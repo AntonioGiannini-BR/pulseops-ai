@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2563EB
+skinparam usecase {
+  BackgroundColor #EDF4FF
+  BorderColor #2563EB
+  FontColor #12325A
+}
+title PulseOps AI — Casos de uso (MVP planejado)
+actor "Solicitante" as Sol
+actor "Analista" as An
+actor "Administrador" as Adm
+rectangle "PulseOps AI" {
+ usecase "Autenticar-se" as Auth
+ usecase "Abrir chamado" as Abrir
+ usecase "Acompanhar\nmeus chamados" as Ver
+ usecase "Comentar chamado" as Com
+ usecase "Classificar e\natribuir chamado" as Triar
+ usecase "Alterar status /\nresolver chamado" as Resolver
+ usecase "Consultar KPIs" as KPIs
+ usecase "Revisar sugestao\nde IA" as Revisar
+ usecase "Gerenciar categorias\ne SLAs" as Gerenciar
+}
+Sol --> Auth
+Sol --> Abrir
+Sol --> Ver
+Sol --> Com
+An --> Auth
+An --> Triar
+An --> Resolver
+An --> Com
+An --> KPIs
+An --> Revisar
+Adm --> Auth
+Adm --> Triar
+Adm --> Resolver
+Adm --> KPIs
+Adm --> Revisar
+Adm --> Gerenciar
+note bottom of Revisar
+  A IA apenas sugere.
+  A aplicacao exige decisao humana.
+end note
+@enduml
