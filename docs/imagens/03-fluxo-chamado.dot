@@ -1,0 +1,21 @@
+digraph G {
+rankdir=TB;
+graph [bgcolor="#F8FAFD", pad="0.35", nodesep="0.52", ranksep="0.78", splines=ortho, fontname="DejaVu Sans", fontsize=20, fontcolor="#132343", labeljust=l, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#D7E2F1", penwidth=1.45, margin="0.23,0.18", fontname="DejaVu Sans", fontsize=13, fontcolor="#132343"];
+edge [color="#90A6C6", penwidth=1.8, arrowsize=0.8, fontname="DejaVu Sans", fontsize=10, fontcolor="#526482"];
+
+label="JORNADA DE UM CHAMADO • Fluxo de negócio previsto";
+
+  novo [label="01  Abertura\nSolicitante registra",fillcolor="#EAF2FF",color="#2563EB"];
+  triagem [label="02  Triagem\nCategoria e prioridade",fillcolor="#EAF2FF",color="#2563EB"];
+  atendimento [label="03  Atendimento\nAnalista responsável",fillcolor="#EAF2FF",color="#2563EB"];
+  resolvido [label="04  Resolvido\nData registrada",fillcolor="#E7F8F1",color="#0D9775"];
+  fechado [label="05  Fechado\nHistórico preservado",fillcolor="#E7F8F1",color="#0D9775"];
+  sla [label="SLA calculado\nPela prioridade",fillcolor="#FFF2E5",color="#E78028"];
+  hist [label="Trilha de auditoria\nMudanças relevantes",fillcolor="#FFFFFF",color="#7755D1"];
+  novo -> triagem -> atendimento -> resolvido -> fechado;
+  resolvido -> atendimento [label="reabertura", color="#E78028", constraint=false];
+  triagem -> sla [style=dashed, color="#E78028"];
+  atendimento -> hist [style=dashed, color="#7755D1"];
+
+}
