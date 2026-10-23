@@ -72,3 +72,63 @@ def test_create_ticket_empty_title():
     )
 
     assert response.status_code == 422
+
+
+def test_update_ticket_success():
+    tickets = client.get("/tickets/").json()
+    assert len(tickets) > 0
+
+    ticket_id = tickets[0]["id"]
+    original_status = tickets[0]["status"]
+    original_priority = tickets[0]["priority"]
+
+    try:
+        response = client.patch(
+            f"/tickets/{ticket_id}",
+            json={
+                "status": "em_atendimento",
+                "priority": "alta",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "em_atendimento"
+        assert response.json()["priority"] == "alta"
+
+        check = client.get(f"/tickets/{ticket_id}")
+        assert check.status_code == 200
+        assert check.json()["status"] == "em_atendimento"
+        assert check.json()["priority"] == "alta"
+
+    finally:
+        client.patch(
+            f"/tickets/{ticket_id}",
+            json={
+                "status": original_status,
+                "priority": original_priority,
+            },
+        )
+
+
+def test_update_ticket_not_found():
+    response = client.patch(
+        "/tickets/999999",
+        json={"status": "resolvido"},
+    )
+    assert response.status_code == 404
+
+
+def test_update_ticket_invalid_status():
+    response = client.patch(
+        "/tickets/999999",
+        json={"status": "cancelado"},
+    )
+    assert response.status_code == 422
+
+
+def test_update_ticket_empty_body():
+    response = client.patch(
+        "/tickets/999999",
+        json={},
+    )
+    assert response.status_code == 422
