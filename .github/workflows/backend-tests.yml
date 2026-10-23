@@ -72,4 +72,6 @@ jobs:
 
       - name: Run Python tests
         working-directory: backend
+        env:
+          JWT_SECRET_KEY: "pulseops-ci-test-key-not-for-production-2026"
         run: python -m pytest -v
