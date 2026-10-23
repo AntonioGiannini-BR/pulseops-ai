@@ -172,3 +172,74 @@ def create_ticket(
             detail="Dados inválidos ou usuário/categoria inexistente"
 
         )
+
+# PATCH - Atualizar status e prioridade de um chamado
+
+class TicketUpdate(BaseModel):
+    status: Literal[
+        "aberto",
+        "em_triagem",
+        "em_atendimento",
+        "resolvido",
+        "fechado",
+    ] | None = None
+
+    priority: Literal[
+        "baixa",
+        "media",
+        "alta",
+        "critica",
+    ] | None = None
+
+
+@router.patch("/{ticket_id}")
+def update_ticket(
+    ticket_id: int,
+    ticket: TicketUpdate,
+    db: Session = Depends(get_db),
+):
+    changes = ticket.model_dump(exclude_unset=True)
+
+    if not changes or any(value is None for value in changes.values()):
+        raise HTTPException(
+            status_code=422,
+            detail="Informe status ou prioridade com um valor válido",
+        )
+
+    result = db.execute(
+        text("""
+            UPDATE tickets
+            SET
+                status = COALESCE(:status, status),
+                priority = COALESCE(:priority, priority),
+                updated_at = NOW()
+            WHERE id = :ticket_id
+            RETURNING
+                id,
+                title,
+                description,
+                status,
+                priority,
+                requester_id,
+                category_id,
+                opened_at,
+                updated_at
+        """),
+        {
+            "ticket_id": ticket_id,
+            "status": changes.get("status"),
+            "priority": changes.get("priority"),
+        },
+    )
+
+    updated_ticket = result.mappings().first()
+
+    if updated_ticket is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
+    db.commit()
+    return dict(updated_ticket)
