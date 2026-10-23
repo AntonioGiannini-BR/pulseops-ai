@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-
+from app.api.tickets import router as tickets_router
 from app.db.session import engine
 
 
@@ -10,6 +10,7 @@ app = FastAPI(
     description="API de operações empresariais do PulseOps AI",
     version="0.2.0",
 )
+app.include_router(tickets_router)
 
 
 @app.get("/health", tags=["Health"])
@@ -33,7 +34,7 @@ def database_health():
         }
 
     except SQLAlchemyError:
-        return {
-            "status": "error",
-            "database": "disconnected",
-        }
+        raise HTTPException(
+            status_code=503,
+            detail="Database unavailable"
+        )
