@@ -89,3 +89,11 @@ def test_login_conta_desativada(test_user):
     )
 
     assert response.status_code == 401
+
+
+def test_tickets_com_jwt_valido(test_user):
+    from app.core.security import create_access_token
+    token = create_access_token(test_user["id"])
+    response = TestClient(app).get("/tickets/", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
