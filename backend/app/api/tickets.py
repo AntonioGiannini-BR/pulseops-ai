@@ -1,4 +1,4 @@
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_roles
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,7 +18,10 @@ class TicketCreate(BaseModel):
     priority: Literal["baixa", "media", "alta", "critica"] = "media"
 
 @router.get("/")
-def list_tickets(db: Session = Depends(get_db)):
+def list_tickets(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
     result = db.execute(
         text("""
             SELECT
@@ -31,14 +34,23 @@ def list_tickets(db: Session = Depends(get_db)):
                 category_id,
                 opened_at
             FROM tickets
+            WHERE (:is_staff OR requester_id = :user_id)
             ORDER BY id
-        """)
+        """),
+        {
+            "is_staff": current_user["role"] in ("admin", "analista"),
+            "user_id": current_user["id"],
+        },
     )
 
     return [dict(row) for row in result.mappings().all()]
 
 @router.get("/{ticket_id}")
-def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
+def get_ticket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
     result = db.execute(
         text("""
             SELECT
@@ -52,8 +64,13 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
                 opened_at
             FROM tickets
             WHERE id = :ticket_id
+              AND (:is_staff OR requester_id = :user_id)
         """),
-        {"ticket_id": ticket_id}
+        {
+            "ticket_id": ticket_id,
+            "is_staff": current_user["role"] in ("admin", "analista"),
+            "user_id": current_user["id"],
+        }
     )
 
     ticket = result.mappings().first()
@@ -72,9 +89,25 @@ def create_ticket(
 
     ticket: TicketCreate,
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 
 ):
+
+    if current_user["role"] not in ("admin", "analista", "solicitante"):
+        raise HTTPException(
+            status_code=403,
+            detail="Perfil sem permissão para criar chamados",
+        )
+
+    if (
+        current_user["role"] == "solicitante"
+        and ticket.requester_id != current_user["id"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Você não pode criar chamados em nome de outro usuário",
+        )
 
     if not ticket.title.strip() or not ticket.description.strip():
 
@@ -198,6 +231,7 @@ def update_ticket(
     ticket_id: int,
     ticket: TicketUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("admin", "analista")),
 ):
     changes = ticket.model_dump(exclude_unset=True)
 
