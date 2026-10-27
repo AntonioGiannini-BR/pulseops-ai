@@ -1,3 +1,4 @@
+from app.api.deps import get_current_user
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 
-router = APIRouter(prefix="/tickets", tags=["Tickets"])
+router = APIRouter(prefix="/tickets", tags=["Tickets"], dependencies=[Depends(get_current_user)])
 class TicketCreate(BaseModel):
     title: str = Field(min_length=1, max_length=180)
     description: str = Field(min_length=1)
