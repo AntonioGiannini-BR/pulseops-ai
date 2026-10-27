@@ -2,7 +2,7 @@ from app.api.deps import get_current_user, require_roles
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -210,20 +210,14 @@ def create_ticket(
 # PATCH - Atualizar status e prioridade de um chamado
 
 class TicketUpdate(BaseModel):
-    status: Literal[
-        "aberto",
-        "em_triagem",
-        "em_atendimento",
-        "resolvido",
-        "fechado",
-    ] | None = None
+    model_config = ConfigDict(extra="forbid")
 
     priority: Literal[
         "baixa",
         "media",
         "alta",
         "critica",
-    ] | None = None
+    ]
 
 
 @router.patch("/{ticket_id}")
@@ -245,8 +239,7 @@ def update_ticket(
         text("""
             UPDATE tickets
             SET
-                status = COALESCE(:status, status),
-                priority = COALESCE(:priority, priority),
+                priority = :priority,
                 updated_at = NOW()
             WHERE id = :ticket_id
             RETURNING
@@ -262,8 +255,7 @@ def update_ticket(
         """),
         {
             "ticket_id": ticket_id,
-            "status": changes.get("status"),
-            "priority": changes.get("priority"),
+            "priority": changes["priority"],
         },
     )
 
@@ -343,3 +335,115 @@ def assign_ticket(
 
     db.commit()
     return dict(updated_ticket)
+
+
+# Ciclo de vida dos chamados
+
+class TicketStatusUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal[
+        "aberto",
+        "em_triagem",
+        "em_atendimento",
+        "resolvido",
+        "fechado",
+    ]
+
+
+ALLOWED_STATUS_TRANSITIONS = {
+    "aberto": "em_triagem",
+    "em_triagem": "em_atendimento",
+    "em_atendimento": "resolvido",
+    "resolvido": "fechado",
+    "fechado": None,
+}
+
+
+@router.patch("/{ticket_id}/status")
+def update_ticket_status(
+    ticket_id: int,
+    payload: TicketStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("admin", "analista")),
+):
+    """Atualiza o status respeitando o ciclo de vida do chamado."""
+
+    result = db.execute(
+        text("""
+            SELECT
+                id,
+                status,
+                resolved_at,
+                closed_at
+            FROM tickets
+            WHERE id = :ticket_id
+            FOR UPDATE
+        """),
+        {"ticket_id": ticket_id},
+    )
+
+    ticket = result.mappings().first()
+
+    if ticket is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
+    current_status = ticket["status"]
+    new_status = payload.status
+
+    expected_status = ALLOWED_STATUS_TRANSITIONS.get(current_status)
+
+    if new_status != expected_status:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Transição inválida: "
+                f"{current_status} -> {new_status}"
+            ),
+        )
+
+    result = db.execute(
+        text("""
+            UPDATE tickets
+            SET
+                status = CAST(:new_status AS VARCHAR),
+                resolved_at = CASE
+                    WHEN CAST(:new_status AS VARCHAR) = 'resolvido'
+                    THEN NOW()
+                    ELSE resolved_at
+                END,
+                closed_at = CASE
+                    WHEN CAST(:new_status AS VARCHAR) = 'fechado'
+                    THEN NOW()
+                    ELSE closed_at
+                END,
+                updated_at = NOW()
+            WHERE id = :ticket_id
+            RETURNING
+                id,
+                title,
+                status,
+                priority,
+                requester_id,
+                assignee_id,
+                opened_at,
+                resolved_at,
+                closed_at,
+                updated_at
+        """),
+        {
+            "ticket_id": ticket_id,
+            "new_status": new_status,
+        },
+    )
+
+    updated_ticket = dict(result.mappings().one())
+
+    db.commit()
+
+    return updated_ticket
