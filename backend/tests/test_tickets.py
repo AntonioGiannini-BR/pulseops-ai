@@ -93,35 +93,31 @@ def test_update_ticket_success():
     try:
         response = client.patch(
             f"/tickets/{ticket_id}",
-            json={
-                "status": "em_atendimento",
-                "priority": "alta",
-            },
+            json={"priority": "alta"},
         )
 
         assert response.status_code == 200
-        assert response.json()["status"] == "em_atendimento"
         assert response.json()["priority"] == "alta"
+        assert response.json()["status"] == original_status
 
         check = client.get(f"/tickets/{ticket_id}")
+
         assert check.status_code == 200
-        assert check.json()["status"] == "em_atendimento"
         assert check.json()["priority"] == "alta"
+        assert check.json()["status"] == original_status
 
     finally:
         client.patch(
             f"/tickets/{ticket_id}",
-            json={
-                "status": original_status,
-                "priority": original_priority,
-            },
+            json={"priority": original_priority},
         )
+
 
 
 def test_update_ticket_not_found():
     response = client.patch(
         "/tickets/999999",
-        json={"status": "resolvido"},
+        json={"priority": "alta"},
     )
     assert response.status_code == 404
 
