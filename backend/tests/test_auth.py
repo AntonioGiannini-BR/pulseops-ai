@@ -254,3 +254,29 @@ def test_staff_pode_consultar_ticket_de_outro_usuario(role):
                         text("DELETE FROM app_users WHERE id = :id"),
                         {"id": user_id},
                     )
+
+
+@pytest.mark.parametrize("role", ["analista", "solicitante"])
+def test_apenas_admin_pode_atribuir_ticket(role):
+    from fastapi.testclient import TestClient
+    from app.api.deps import get_current_user
+    from app.main import app
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": 1,
+        "email": f"{role}@pulseops.example",
+        "role": role,
+    }
+
+    try:
+        response = TestClient(app).patch(
+            "/tickets/999999999/assign",
+            json={"assignee_id": 1},
+        )
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Você não tem permissão para realizar esta ação"
+        )
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)

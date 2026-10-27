@@ -278,3 +278,68 @@ def update_ticket(
 
     db.commit()
     return dict(updated_ticket)
+
+
+class TicketAssignment(BaseModel):
+    assignee_id: int = Field(gt=0)
+
+
+@router.patch("/{ticket_id}/assign")
+def assign_ticket(
+    ticket_id: int,
+    assignment: TicketAssignment,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("admin")),
+):
+    """Atribui ou reatribui um ticket a um analista ativo."""
+
+    analyst = db.execute(
+        text("""
+            SELECT id
+            FROM app_users
+            WHERE id = :user_id
+              AND role = 'analista'
+              AND is_active = TRUE
+        """),
+        {"user_id": assignment.assignee_id},
+    ).scalar_one_or_none()
+
+    if analyst is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Analista inexistente, inativo ou sem permissão",
+        )
+
+    result = db.execute(
+        text("""
+            UPDATE tickets
+            SET
+                assignee_id = :assignee_id,
+                updated_at = NOW()
+            WHERE id = :ticket_id
+            RETURNING
+                id,
+                title,
+                status,
+                priority,
+                requester_id,
+                assignee_id,
+                updated_at
+        """),
+        {
+            "ticket_id": ticket_id,
+            "assignee_id": assignment.assignee_id,
+        },
+    )
+
+    updated_ticket = result.mappings().first()
+
+    if updated_ticket is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
+    db.commit()
+    return dict(updated_ticket)
