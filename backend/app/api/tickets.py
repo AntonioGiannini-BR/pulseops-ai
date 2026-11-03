@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.services.ticket_history import record_ticket_history
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"], dependencies=[Depends(get_current_user)])
 class TicketCreate(BaseModel):
@@ -191,6 +192,15 @@ def create_ticket(
 
         new_ticket = dict(result.mappings().one())
 
+        record_ticket_history(
+            db,
+            ticket_id=new_ticket["id"],
+            actor_id=current_user["id"],
+            action="criacao",
+            old_value=None,
+            new_value=new_ticket["status"],
+        )
+
         db.commit()
 
         return new_ticket
@@ -235,6 +245,23 @@ def update_ticket(
             detail="Informe status ou prioridade com um valor válido",
         )
 
+    previous_priority = db.execute(
+        text("""
+            SELECT priority
+            FROM tickets
+            WHERE id = :ticket_id
+            FOR UPDATE
+        """),
+        {"ticket_id": ticket_id},
+    ).scalar_one_or_none()
+
+    if previous_priority is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
     result = db.execute(
         text("""
             UPDATE tickets
@@ -266,6 +293,16 @@ def update_ticket(
         raise HTTPException(
             status_code=404,
             detail="Chamado não encontrado",
+        )
+
+    if previous_priority != updated_ticket["priority"]:
+        record_ticket_history(
+            db,
+            ticket_id=ticket_id,
+            actor_id=current_user["id"],
+            action="mudanca_prioridade",
+            old_value=previous_priority,
+            new_value=updated_ticket["priority"],
         )
 
     db.commit()
@@ -302,6 +339,23 @@ def assign_ticket(
             detail="Analista inexistente, inativo ou sem permissão",
         )
 
+    previous_assignee = db.execute(
+        text("""
+            SELECT assignee_id
+            FROM tickets
+            WHERE id = :ticket_id
+            FOR UPDATE
+        """),
+        {"ticket_id": ticket_id},
+    ).mappings().first()
+
+    if previous_assignee is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
     result = db.execute(
         text("""
             UPDATE tickets
@@ -331,6 +385,23 @@ def assign_ticket(
         raise HTTPException(
             status_code=404,
             detail="Chamado não encontrado",
+        )
+
+    old_assignee_id = previous_assignee["assignee_id"]
+    new_assignee_id = updated_ticket["assignee_id"]
+
+    if old_assignee_id != new_assignee_id:
+        record_ticket_history(
+            db,
+            ticket_id=ticket_id,
+            actor_id=current_user["id"],
+            action="atribuicao",
+            old_value=(
+                str(old_assignee_id)
+                if old_assignee_id is not None
+                else None
+            ),
+            new_value=str(new_assignee_id),
         )
 
     db.commit()
@@ -444,6 +515,64 @@ def update_ticket_status(
 
     updated_ticket = dict(result.mappings().one())
 
+    record_ticket_history(
+        db,
+        ticket_id=ticket_id,
+        actor_id=current_user["id"],
+        action="mudanca_status",
+        old_value=current_status,
+        new_value=new_status,
+    )
+
     db.commit()
 
     return updated_ticket
+
+
+@router.get("/{ticket_id}/history")
+def get_ticket_history(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Consulta o histórico de um chamado respeitando as permissões."""
+
+    ticket = db.execute(
+        text("""
+            SELECT id
+            FROM tickets
+            WHERE id = :ticket_id
+              AND (:is_staff OR requester_id = :user_id)
+        """),
+        {
+            "ticket_id": ticket_id,
+            "is_staff": current_user["role"] in ("admin", "analista"),
+            "user_id": current_user["id"],
+        },
+    ).scalar_one_or_none()
+
+    if ticket is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chamado não encontrado",
+        )
+
+    result = db.execute(
+        text("""
+            SELECT
+                id,
+                ticket_id,
+                actor_id,
+                action,
+                old_value,
+                new_value,
+                details,
+                created_at
+            FROM ticket_history
+            WHERE ticket_id = :ticket_id
+            ORDER BY created_at ASC, id ASC
+        """),
+        {"ticket_id": ticket_id},
+    )
+
+    return [dict(row) for row in result.mappings().all()]
