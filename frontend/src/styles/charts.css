@@ -1,0 +1,135 @@
+﻿.dashboard-analytics {
+  margin-top: 28px;
+}
+
+.analytics-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.analytics-heading h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.analytics-heading p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.analytics-badge {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.chart-header p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.resolution-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.resolution-label {
+  display: block;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.resolution-card p {
+  color: #64748b;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+.resolution-value {
+  color: #2563eb;
+  font-size: 28px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.resolution-value span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.charts-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.charts-loading {
+  color: #64748b;
+  padding: 20px;
+}
+
+@media (max-width: 1050px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .analytics-heading,
+  .resolution-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+}

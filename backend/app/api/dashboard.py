@@ -52,6 +52,7 @@ def get_dashboard_summary(
             else None
         ),
     }
+
 @router.get("/distribution")
 def get_dashboard_distribution(
     db: Session = Depends(get_db),
