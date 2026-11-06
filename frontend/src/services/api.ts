@@ -1,3 +1,4 @@
+import type { Analyst } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
 import type { TicketCreate } from '../types/tickets'
 import type { Ticket, TicketHistoryEvent, TicketComment, TicketCommentCreate } from '../types/tickets'
@@ -233,6 +234,36 @@ export function updateTicketPriority(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ priority }),
+    },
+  )
+}
+
+export function getAnalysts(
+  token: string,
+  signal?: AbortSignal,
+): Promise<Analyst[]> {
+  return apiRequest<Analyst[]>('/analysts/', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  })
+}
+
+
+export function assignTicket(
+  token: string,
+  ticketId: number,
+  assigneeId: number,
+): Promise<Pick<Ticket, 'id' | 'assignee_id'>> {
+  return apiRequest<Pick<Ticket, 'id' | 'assignee_id'>>(
+    `/tickets/${ticketId}/assign`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ assignee_id: assigneeId }),
     },
   )
 }

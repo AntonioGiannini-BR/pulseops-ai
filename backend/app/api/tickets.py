@@ -32,6 +32,7 @@ def list_tickets(
                 priority,
                 status,
                 requester_id,
+                assignee_id,
                 category_id,
                 opened_at
             FROM tickets
@@ -61,6 +62,7 @@ def get_ticket(
                 priority,
                 status,
                 requester_id,
+                assignee_id,
                 category_id,
                 opened_at
             FROM tickets

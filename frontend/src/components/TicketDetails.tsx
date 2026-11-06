@@ -3,6 +3,7 @@ import { getTicket, getCurrentUser, updateTicketStatus } from '../services/api'
 import TicketHistory from './TicketHistory'
 import TicketComments from './TicketComments'
 import TicketPriorityControl from './TicketPriorityControl'
+import TicketAssignmentControl from './TicketAssignmentControl'
 import type {
   Ticket,
   TicketPriority,
@@ -63,6 +64,7 @@ export default function TicketDetails({
   const [error, setError] = useState<string | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const [canUpdateStatus, setCanUpdateStatus] = useState(false)
+  const [canAssignTickets, setCanAssignTickets] = useState(false)
   const [statusSaving, setStatusSaving] = useState(false)
   const [historyRevision, setHistoryRevision] = useState(0)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -136,11 +138,13 @@ export default function TicketDetails({
           setCanUpdateStatus(
             user.role === 'admin' || user.role === 'analista'
           )
+          setCanAssignTickets(user.role === 'admin')
         }
       })
       .catch(() => {
         if (!controller.signal.aborted) {
           setCanUpdateStatus(false)
+          setCanAssignTickets(false)
         }
       })
 
@@ -304,6 +308,22 @@ export default function TicketDetails({
                     current ? { ...current, priority } : current
                   )
                   onPriorityChanged(ticketId, priority)
+                  setHistoryRevision((current) => current + 1)
+                }}
+              />
+            )}
+
+            {canAssignTickets && (
+              <TicketAssignmentControl
+                token={token}
+                ticketId={ticketId}
+                assigneeId={ticket.assignee_id}
+                onAssigned={(assigneeId) => {
+                  setTicket((current) =>
+                    current
+                      ? { ...current, assignee_id: assigneeId }
+                      : current
+                  )
                   setHistoryRevision((current) => current + 1)
                 }}
               />
