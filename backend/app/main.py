@@ -7,6 +7,7 @@ from app.api.auth import router as auth_router
 from app.db.session import engine
 from app.api.ticket_comments import router as ticket_comments_router
 from app.api.dashboard import router as dashboard_router
+from app.api.categories import router as categories_router
 
 app = FastAPI(
     title="PulseOps AI API",
@@ -28,6 +29,7 @@ app.include_router(tickets_router)
 app.include_router(auth_router)
 app.include_router(ticket_comments_router)
 app.include_router(dashboard_router)
+app.include_router(categories_router)
 
 @app.get("/health", tags=["Health"])
 def health_check():
