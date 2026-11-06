@@ -9,6 +9,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
+from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -63,3 +64,14 @@ def login(
     token = create_access_token(user["id"])
 
     return TokenResponse(access_token=token)
+
+
+@router.get("/me")
+def get_authenticated_user(
+    current_user: dict = Depends(get_current_user),
+):
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "role": current_user["role"],
+    }

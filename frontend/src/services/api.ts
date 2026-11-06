@@ -1,3 +1,6 @@
+import type { Category, AuthenticatedUser } from '../types/tickets'
+import type { TicketCreate } from '../types/tickets'
+import type { Ticket, TicketHistoryEvent, TicketComment, TicketCommentCreate } from '../types/tickets'
 import type {
   DashboardSummary,
   DashboardDistribution,
@@ -77,4 +80,159 @@ export function getDashboardDistribution(
     },
     signal,
   })
+}
+
+
+export function getTickets(
+  token: string,
+  signal?: AbortSignal,
+): Promise<Ticket[]> {
+  return apiRequest<Ticket[]>('/tickets/', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  })
+}
+
+
+export function getTicket(
+  token: string,
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<Ticket> {
+  return apiRequest<Ticket>(`/tickets/${ticketId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  })
+}
+
+
+export function getTicketHistory(
+  token: string,
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<TicketHistoryEvent[]> {
+  return apiRequest<TicketHistoryEvent[]>(
+    `/tickets/${ticketId}/history`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      signal,
+    },
+  )
+}
+
+
+export function getTicketComments(
+  token: string,
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<TicketComment[]> {
+  return apiRequest<TicketComment[]>(
+    `/tickets/${ticketId}/comments`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      signal,
+    },
+  )
+}
+
+
+export function createTicketComment(
+  token: string,
+  ticketId: number,
+  payload: TicketCommentCreate,
+): Promise<TicketComment> {
+  return apiRequest<TicketComment>(
+    `/tickets/${ticketId}/comments`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
+
+export function createTicket(
+  token: string,
+  payload: TicketCreate,
+): Promise<Ticket> {
+  return apiRequest<Ticket>('/tickets/', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
+
+export function getCategories(
+  token: string,
+  signal?: AbortSignal,
+): Promise<Category[]> {
+  return apiRequest<Category[]>('/categories/', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  })
+}
+
+
+export function getCurrentUser(
+  token: string,
+  signal?: AbortSignal,
+): Promise<AuthenticatedUser> {
+  return apiRequest<AuthenticatedUser>('/auth/me', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  })
+}
+
+
+export function updateTicketStatus(
+  token: string,
+  ticketId: number,
+  status: Ticket['status'],
+): Promise<Pick<Ticket, 'id' | 'status'>> {
+  return apiRequest<Pick<Ticket, 'id' | 'status'>>(
+    `/tickets/${ticketId}/status`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    },
+  )
+}
+
+
+export function updateTicketPriority(
+  token: string,
+  ticketId: number,
+  priority: Ticket['priority'],
+): Promise<Pick<Ticket, 'id' | 'priority'>> {
+  return apiRequest<Pick<Ticket, 'id' | 'priority'>>(
+    `/tickets/${ticketId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ priority }),
+    },
+  )
 }

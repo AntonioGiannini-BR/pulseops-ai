@@ -1,0 +1,88 @@
+.ticket-comment-form {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #e8edf6;
+  border-radius: 12px;
+  background: #f8fafd;
+}
+
+.ticket-comment-form h4 {
+  margin: 0 0 15px;
+  font-size: 14px;
+  color: #172544;
+}
+
+.ticket-comment-form > label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #56657c;
+}
+
+.ticket-comment-form textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px;
+  border: 1px solid #dce5f2;
+  border-radius: 9px;
+  background: #fff;
+  color: #233551;
+  resize: vertical;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ticket-comment-form .ticket-comment-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.ticket-comment-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  accent-color: #4f83e9;
+}
+
+.ticket-comment-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ticket-comment-form-footer span {
+  color: #8190a6;
+  font-size: 11px;
+}
+
+.ticket-comment-form-footer button {
+  padding: 11px 16px;
+  background: #326df4;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ticket-comment-form-footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ticket-comment-error {
+  color: #c0392b;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+  .ticket-comment-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

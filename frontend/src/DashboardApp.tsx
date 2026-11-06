@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
+import Tickets from './pages/Tickets'
 import Sidebar from './components/Sidebar'
 
 import { getDashboardSummary } from './services/api'
@@ -161,7 +162,11 @@ export default function DashboardApp({ token }: DashboardAppProps) {
               />
             )}
 
-            {currentPage !== 'overview' && (
+            {currentPage === 'tickets' && (
+              <Tickets token={token} />
+            )}
+
+            {currentPage !== 'overview' && currentPage !== 'tickets' && (
             <div className="panel">
               <div className="panel-top">
                 <div>

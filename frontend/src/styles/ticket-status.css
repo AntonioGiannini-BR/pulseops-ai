@@ -1,0 +1,75 @@
+.ticket-status-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #dce7ff;
+  border-radius: 12px;
+  background: #f5f8ff;
+}
+
+.ticket-status-action strong {
+  color: #172544;
+  font-size: 13px;
+}
+
+.ticket-status-action p {
+  margin: 6px 0 0;
+  color: #687991;
+  font-size: 12px;
+}
+
+.ticket-status-action button {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 15px;
+  background: #326df4;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticket-status-action button:hover:not(:disabled) {
+  background: #2559d6;
+}
+
+.ticket-status-action button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ticket-status-error {
+  color: #b42318;
+  font-size: 12px;
+}
+
+
+.ticket-priority-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ticket-priority-controls label {
+  font-size: 12px;
+  color: #42526b;
+}
+
+.ticket-priority-controls select {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px;
+  background: #fff;
+  color: #172544;
+  font-size: 13px;
+}
+
+.ticket-priority-action .ticket-status-error {
+  flex-basis: 100%;
+  margin: 0;
+}

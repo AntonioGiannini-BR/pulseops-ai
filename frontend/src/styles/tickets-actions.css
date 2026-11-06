@@ -1,0 +1,41 @@
+.tickets-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.new-ticket-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 16px;
+  border: 1px solid #326df4;
+  border-radius: 9px;
+  background: #326df4;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.new-ticket-trigger:hover {
+  background: #2559d6;
+}
+
+.new-ticket-trigger:focus-visible {
+  outline: 3px solid #9bb8ff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .tickets-panel-actions {
+    justify-content: flex-start;
+  }
+
+  .new-ticket-trigger {
+    width: 100%;
+  }
+}
