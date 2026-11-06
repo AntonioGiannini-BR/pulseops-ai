@@ -18,6 +18,7 @@ export interface Ticket {
   priority: TicketPriority
   status: TicketStatus
   requester_id: number
+  assignee_id: number | null
   category_id: number
   opened_at: string
 }
@@ -69,4 +70,9 @@ export interface AuthenticatedUser {
   id: number
   email: string
   role: 'admin' | 'analista' | 'solicitante'
+}
+
+export interface Analyst {
+  id: number
+  email: string
 }
