@@ -113,3 +113,40 @@ export interface AIProviderStatus {
   configured: boolean
   model: string | null
 }
+
+export interface ResolutionGuide {
+  probable_cause: string
+  steps: string[]
+  verification: string
+  requester_reply: string
+}
+
+export interface ResolutionGuideResponse {
+  model_name: string
+  guide: ResolutionGuide
+}
+
+export type ResolutionActionId = 'diagnose_platform' | 'send_guidance' | 'advance_workflow'
+
+export interface ResolutionAutomationAction {
+  id: ResolutionActionId
+  label: string
+  description: string
+  preview: string
+  available: boolean
+  reason: string | null
+}
+
+export interface ResolutionAutomationCatalog {
+  ticket_id: number
+  expected_status: TicketStatus
+  actions: ResolutionAutomationAction[]
+}
+
+export interface ResolutionAutomationResult {
+  action_id: ResolutionActionId
+  ticket_status: TicketStatus
+  message: string
+  comment: TicketComment | null
+  diagnostic: { api: string; database: string } | null
+}

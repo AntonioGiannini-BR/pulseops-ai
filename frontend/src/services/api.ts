@@ -1,4 +1,5 @@
 import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
+import type { ResolutionActionId, ResolutionAutomationCatalog, ResolutionAutomationResult, ResolutionGuideResponse, TicketStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
 import type { TicketCreate } from '../types/tickets'
 import type { Ticket, TicketHistoryEvent, TicketComment, TicketCommentCreate } from '../types/tickets'
@@ -318,4 +319,41 @@ export function getAIProviderStatus(
     headers: { Authorization: `Bearer ${token}` },
     signal,
   })
+}
+
+export function getResolutionAutomations(
+  token: string,
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<ResolutionAutomationCatalog> {
+  return apiRequest<ResolutionAutomationCatalog>(
+    `/tickets/${ticketId}/resolution-automations`,
+    { headers: { Authorization: `Bearer ${token}` }, signal },
+  )
+}
+
+export function generateResolutionGuide(
+  token: string,
+  ticketId: number,
+): Promise<ResolutionGuideResponse> {
+  return apiRequest<ResolutionGuideResponse>(
+    `/tickets/${ticketId}/resolution-guide`,
+    { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export function executeResolutionAutomation(
+  token: string,
+  ticketId: number,
+  actionId: ResolutionActionId,
+  expectedStatus: TicketStatus,
+): Promise<ResolutionAutomationResult> {
+  return apiRequest<ResolutionAutomationResult>(
+    `/tickets/${ticketId}/resolution-automations/${actionId}/execute`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ approved: true, expected_status: expectedStatus }),
+    },
+  )
 }
