@@ -34,7 +34,21 @@ def get_dashboard_summary(
                 chamados_pendentes,
                 chamados_concluidos,
                 chamados_fora_sla,
-                horas_medias_resolucao
+                horas_medias_resolucao,
+                (
+                    SELECT ROUND(
+                        100.0 * COUNT(*) FILTER (
+                            WHERE status IN ('resolvido', 'fechado')
+                              AND resolved_at <= due_at
+                        ) / NULLIF(
+                            COUNT(*) FILTER (
+                                WHERE status IN ('resolvido', 'fechado')
+                                  AND due_at IS NOT NULL
+                            ), 0
+                        ), 2
+                    )
+                    FROM v_ticket_sla
+                ) AS cumprimento_sla_pct
             FROM v_dashboard_kpis
         """)
     )
@@ -49,6 +63,11 @@ def get_dashboard_summary(
         "horas_medias_resolucao": (
             float(summary["horas_medias_resolucao"])
             if summary["horas_medias_resolucao"] is not None
+            else None
+        ),
+        "cumprimento_sla_pct": (
+            float(summary["cumprimento_sla_pct"])
+            if summary["cumprimento_sla_pct"] is not None
             else None
         ),
     }
