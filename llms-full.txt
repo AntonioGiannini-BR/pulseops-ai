@@ -204,6 +204,7 @@ Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejament
 | Arquitetura | [Visão técnica](arquitetura/arquitetura.md), [Padrões](arquitetura/padroes-de-desenvolvimento.md), [Galeria](arquitetura/galeria-visual.md) |
 | Banco de dados | [Modelagem e DER](banco-de-dados/modelagem.md), [Esquema SQL](../db/init/01_schema.sql) |
 | API | [Contrato proposto](api/contrato-api.md) |
+| Assistente de Service Desk | [Triagem com IA](funcionalidades/ia-supervisionada.md), [Resolução e automações aprovadas](funcionalidades/resolucao-assistida.md) |
 | Segurança | [Plano de segurança e privacidade](seguranca/seguranca-e-privacidade.md) |
 | Testes | [Estratégia e validações](testes/plano-de-testes.md) |
 | UML | [Índice de diagramas](uml/README.md) e fontes `.puml` em `docs/uml/diagramas/` |

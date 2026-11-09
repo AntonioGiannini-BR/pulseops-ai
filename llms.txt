@@ -26,6 +26,11 @@
 - [Plano de testes](docs/testes/plano-de-testes.md)
 - [Riscos e decisões arquiteturais](docs/planejamento/riscos-e-decisoes.md)
 
+## Funcionalidades implementadas
+
+- [Triagem supervisionada com IA](docs/funcionalidades/ia-supervisionada.md)
+- [Assistente de resolução e automações aprovadas](docs/funcionalidades/resolucao-assistida.md)
+
 ## Código disponível
 
 - [Protótipo HTML](prototype/index.html)

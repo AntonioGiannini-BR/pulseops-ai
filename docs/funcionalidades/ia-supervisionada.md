@@ -1,5 +1,7 @@
 # Triagem assistida com revisão humana (US-08)
 
+A etapa seguinte está em [Assistente de resolução e automações aprovadas](resolucao-assistida.md).
+
 ## Situação
 
 O módulo de triagem permite que um **analista ou administrador** solicite uma sugestão para um chamado aberto, veja a prioridade/categoria recomendadas, o resumo e a justificativa, e decida aprovar ou rejeitar. **Nenhuma sugestão altera um chamado automaticamente.**
