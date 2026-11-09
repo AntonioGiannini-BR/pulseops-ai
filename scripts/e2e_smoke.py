@@ -106,6 +106,18 @@ def main() -> int:
             expect(details.get_by_text("Aberto", exact=True).first).to_be_visible()
 
             details.get_by_role("button", name="Fechar detalhes").click()
+            navigation.get_by_role("button", name="Minha conta").click()
+            expect(page.get_by_role("heading", name="Minha conta", exact=True).first).to_be_visible()
+            page.get_by_label("Senha atual").fill(password)
+            new_password = "NovaSenha-" + password
+            page.get_by_label("Nova senha", exact=True).fill(new_password)
+            page.get_by_label("Confirme a nova senha").fill(new_password)
+            page.get_by_role("button", name="Atualizar senha").click()
+            expect(page.get_by_role("button", name="Entrar na plataforma")).to_be_visible()
+            page.get_by_label("E-mail").fill("ci-e2e@pulseops.invalid")
+            page.locator("#login-password").fill(new_password)
+            page.get_by_role("button", name="Entrar na plataforma").click()
+            expect(page.get_by_role("heading", name=re.compile(r"^Visão geral")).first).to_be_visible()
             page.get_by_role("button", name="Sair").click()
             expect(page.get_by_role("button", name="Entrar na plataforma")).to_be_visible()
             print("E2E aprovado: login, equipes, IA, ticket, CSV, plano, aprovação e logout.")
