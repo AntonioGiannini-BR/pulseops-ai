@@ -22,7 +22,18 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Copie o resultado **somente** para seu `.env` local. Não compartilhe o segredo no chat, nem faça commit de `.env`. Evite `@`, `:`, `/` e `#` na senha usada no URL do PostgreSQL (ou faça URL-encoding dos caracteres especiais).
 
-## 3. Subir aplicação (sem apagar dados)
+## 3. Atualizar volume PostgreSQL existente (sem descartar dados)
+
+Se o volume foi criado **antes** da funcionalidade de administração de contas, aplique a migração idempotente após fazer backup e antes de subir a nova API. O comando abaixo usa o serviço PostgreSQL configurado no `compose.yaml` e não depende de credenciais digitadas na linha de comando:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d database
+Get-Content -Raw .\db\migrations\20261109_user_account_audit.sql | docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
+```
+
+O comando cria somente `user_audit_events` e seu índice, sem apagar registros. Em banco recém-inicializado, essa tabela já existe. Não reexecute `db/init/01_schema.sql` sobre um banco em uso.
+
+## 4. Subir aplicação (sem apagar dados)
 
 ```powershell
 docker compose -f compose.yaml -f compose.app.yaml config --quiet
@@ -49,7 +60,7 @@ docker compose -f compose.yaml -f compose.app.yaml exec backend python -m script
 
 Digite uma senha forte quando o terminal solicitar. O script se recusa a sobrescrever e-mails existentes. Use esse comando apenas na base que você administra.
 
-## 4. IA
+## 5. IA
 
 O Docker usa `AI_PROVIDER=mock` inicialmente. Isso permite demonstrar o fluxo, **mas não é um LLM**.
 
@@ -76,7 +87,7 @@ O teste usa apenas dados fictícios e não substitui a validação da conexão d
 
 Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apontando para o Ollama local em `http://127.0.0.1:11434`. API OpenAI é opcional e pode gerar cobrança; a chave fica somente no backend.
 
-## 5. Verificações antes de release
+## 6. Verificações antes de release
 
 - Verifique que `JWT_SECRET_KEY` é aleatório/privado, que o modo `APP_ENVIRONMENT=production` recusa segredos fracos e que `/api/openapi.json` não está disponível.
 - Em `http://127.0.0.1:8080`, teste login, listagem e criação de tickets, filtros/CSV, Equipes, Central de IA e resolução supervisionada.
@@ -94,7 +105,7 @@ docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'pg_du
 
 O processo de restauração deve ser validado **somente em banco de teste descartável** antes de qualquer uso com dados importantes. Nunca faça backup em repositório público.
 
-## 6. Encerramento e deploy externo
+## 7. Encerramento e deploy externo
 
 Pare containers sem apagar volumes:
 
@@ -106,10 +117,10 @@ docker compose -f compose.yaml -f compose.app.yaml down
 
 O compose publica frontend somente em `127.0.0.1`. Para hospedagem pública, primeiro configure domínio, proxy HTTPS/TLS, secrets no provedor, storage persistente gerenciado, backups automáticos, monitoramento, proteção de autenticação, licenças e política de privacidade. **Nenhum deploy externo foi realizado por este guia.** A aplicação não deve ser apresentada como pronta para uso corporativo antes de cumprir essas condições.
 
-## 7. Ordem de PRs
+## 8. Histórico de PRs
 
 - PR #23: provedor Ollama e visibilidade do modelo.
 - PR #24: planos e automações aprovadas.
 - PR #25: Equipes, Central de IA, CSV, stack Docker, bootstrap, testes e documentação.
 
-Integrar na ordem **#23 → #24 → #25** após revisão e testes locais. Não publicar a `main` automaticamente nem apagar o histórico do Git.
+Os PRs **#23, #24 e #25 foram integrados em `develop` em 09/11/2026** com testes automatizados concluídos. A gestão de contas, migração de auditoria e verificações adicionais foram desenvolvidas no PR #26. Isso **não** representa deploy público nem substitui homologação com Ollama e infraestrutura real. Não publicar a `main` automaticamente nem apagar o histórico do Git.

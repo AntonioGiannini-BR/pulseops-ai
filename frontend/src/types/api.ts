@@ -46,3 +46,33 @@ export interface AIOverview {
   demonstration: number
   external_models: number
 }
+
+
+export interface ManagedUser {
+  id: number
+  full_name: string
+  email: string
+  role: 'admin' | 'analista' | 'solicitante'
+  department_id: number | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface UserCreatePayload {
+  full_name: string
+  email: string
+  password: string
+  role: 'analista' | 'solicitante'
+  department_id: number | null
+}
+
+
+export interface UserAuditEvent {
+  id: number
+  action: 'conta_criada' | 'conta_desativada' | 'conta_reativada' | 'senha_alterada'
+  actor_id: number | null
+  target_user_id: number | null
+  actor_email: string | null
+  target_email: string | null
+  created_at: string
+}

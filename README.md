@@ -9,6 +9,7 @@ Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **Fa
 ## Funcionalidades do MVP
 
 - Login por JWT; perfis `admin`, `analista` e `solicitante`; sessão mantida somente em memória no frontend.
+- **Administração de contas:** cadastro e desativação de analistas/solicitantes, auditoria por administrador e troca da própria senha. Sem cadastro público nem criação de novos administradores pela interface.
 - Criação e acompanhamento de chamados, responsável, status, prioridade, comentários públicos/internos e histórico.
 - Prazos de SLA, indicadores e distribuição dos chamados; busca/filtros e **exportação CSV dos registros visíveis**.
 - **Equipes:** contagens de usuários ativos, analistas e tickets por departamento.
@@ -23,6 +24,8 @@ Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **Fa
 Pré-requisitos: Docker Desktop com PostgreSQL, Python 3.11+, Node 22+, Git. Para IA real local: [Ollama](https://ollama.com/download/windows) e `ollama pull qwen2.5:3b`.
 
 O projeto usa dois ambientes separados: `.env` na raiz para o PostgreSQL do Docker e `backend/.env` para a API. **Preserve suas configurações existentes**; nunca execute scripts de inicialização sobre um banco em uso.
+
+Em bancos **já existentes**, antes de atualizar a API, aplique uma única vez a migração não destrutiva `db/migrations/20261109_user_account_audit.sql` (veja o guia de implantação). Em bancos novos a tabela é criada pelo `db/init/01_schema.sql`.
 
 No primeiro uso, configure uma senha de banco forte em `.env` (baseado em `.env.example`) e inicie apenas o PostgreSQL:
 
@@ -83,6 +86,7 @@ O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo 
 ## Qualidade e documentação
 
 - [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
+- **Auditoria de dependências:** `pip-audit` e `npm audit` executados em Pull Requests, em `develop`/`main` e semanalmente.
 - [Contrato implementado da API](docs/api/contrato-api.md)
 - [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
 - [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)

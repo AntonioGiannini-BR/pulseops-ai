@@ -4,10 +4,11 @@
 
 | Workflow | Verificação | Escopo |
 |---|---|---|
-| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas |
+| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas, administração e auditoria de contas |
 | [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
-| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação de chamado, CSV, plano e confirmação de automação |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação e desativação de contas, criação de chamado, CSV, plano e confirmação de automação |
 | [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
+| [Dependency Security Audit](../../.github/workflows/dependency-audit.yml) | `pip-audit` e `npm audit --audit-level=high` | Alertas públicos de dependências em PRs e a cada semana; não equivale a pentest |
 
 CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
 
@@ -24,6 +25,8 @@ O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` 
 ## Validação manual obrigatória antes de release
 
 - Login com conta válida; logout e expiração de JWT.
+- Administrador cria, desativa/reativa conta; analista e solicitante não acessam gestão de usuários; conferir eventos em `user_audit_events`.
+- Conta ativa consegue trocar a própria senha fornecendo a senha atual; senha incorreta não altera hash.
 - Criar e localizar um chamado; alterar prioridade e conferir recálculo de SLA; avançar status e inspecionar auditoria.
 - Conferir que solicitante não visualiza chamados alheios nem comentários internos.
 - Exportar CSV filtrado e abrir em planilha; não interpretar títulos começando em `=`, `+`, `-` ou `@` como fórmulas.

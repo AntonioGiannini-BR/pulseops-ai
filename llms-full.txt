@@ -20,6 +20,7 @@ Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **Fa
 ## Funcionalidades do MVP
 
 - Login por JWT; perfis `admin`, `analista` e `solicitante`; sessão mantida somente em memória no frontend.
+- **Administração de contas:** cadastro e desativação de analistas/solicitantes, auditoria por administrador e troca da própria senha. Sem cadastro público nem criação de novos administradores pela interface.
 - Criação e acompanhamento de chamados, responsável, status, prioridade, comentários públicos/internos e histórico.
 - Prazos de SLA, indicadores e distribuição dos chamados; busca/filtros e **exportação CSV dos registros visíveis**.
 - **Equipes:** contagens de usuários ativos, analistas e tickets por departamento.
@@ -34,6 +35,8 @@ Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **Fa
 Pré-requisitos: Docker Desktop com PostgreSQL, Python 3.11+, Node 22+, Git. Para IA real local: [Ollama](https://ollama.com/download/windows) e `ollama pull qwen2.5:3b`.
 
 O projeto usa dois ambientes separados: `.env` na raiz para o PostgreSQL do Docker e `backend/.env` para a API. **Preserve suas configurações existentes**; nunca execute scripts de inicialização sobre um banco em uso.
+
+Em bancos **já existentes**, antes de atualizar a API, aplique uma única vez a migração não destrutiva `db/migrations/20261109_user_account_audit.sql` (veja o guia de implantação). Em bancos novos a tabela é criada pelo `db/init/01_schema.sql`.
 
 No primeiro uso, configure uma senha de banco forte em `.env` (baseado em `.env.example`) e inicie apenas o PostgreSQL:
 
@@ -94,6 +97,7 @@ O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo 
 ## Qualidade e documentação
 
 - [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
+- **Auditoria de dependências:** `pip-audit` e `npm audit` executados em Pull Requests, em `develop`/`main` e semanalmente.
 - [Contrato implementado da API](docs/api/contrato-api.md)
 - [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
 - [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
@@ -223,6 +227,8 @@ O arquivo [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) valida l
 ## Fonte: `docs/planejamento/plano-geral.md`
 
 # Plano do projeto — PulseOps AI
+
+> **Nota histórica:** este documento registra o plano original da Parte 1. A implementação atual e o estado de validação estão descritos no [README](../../README.md) e no [guia de release](../implantacao/guia-de-release.md); itens abaixo marcados como "planejados" não refletem necessariamente o código atual.
 
 **Documento:** termo de abertura e plano executivo de desenvolvimento.  
 **Versão:** 0.2 (Parte 1) • **Responsável:** mantenedor do repositório.  
@@ -882,6 +888,7 @@ O [diagrama de classes em PlantUML](../uml/diagramas/02-classes-dominio.puml), c
 |---|---|---|---|
 | POST | `/auth/login` | Público | `access_token` JWT |
 | GET | `/auth/me` | Autenticado | ID, e-mail e perfil |
+| POST | `/auth/change-password` | Autenticado | Troca própria senha após confirmar a atual; resposta sem segredo |
 | GET | `/health`, `/health/db` | Público | Saúde básica e conexão da base |
 | GET | `/dashboard/summary`, `/dashboard/distribution` | Admin/analista | KPI e distribuição |
 | GET | `/teams/summary` | Admin/analista | Contagens por departamento |
@@ -889,6 +896,10 @@ O [diagrama de classes em PlantUML](../uml/diagramas/02-classes-dominio.puml), c
 | GET | `/ai/overview` | Admin/analista | Contagens agregadas de sugestões |
 | GET | `/categories/` | Autenticado | Categorias ativas |
 | GET | `/analysts/` | Admin | Analistas ativos |
+| GET | `/users/?limit=100&offset=0` | Admin | Lista contas sem hashes, com paginação limitada a 100 |
+| POST | `/users/` | Admin | Cria analista ou solicitante ativo, senha em Argon2id |
+| PATCH | `/users/{id}/status` | Admin | Ativa/desativa conta não administrativa |
+| GET | `/users/audit` | Admin | Últimos 50 eventos auditáveis de contas, sem senhas |
 
 ## Chamados
 
@@ -912,6 +923,8 @@ O [diagrama de classes em PlantUML](../uml/diagramas/02-classes-dominio.puml), c
 | GET | `/tickets/{id}/resolution-automations` | Admin/analista | Ações disponíveis e prévias |
 | POST | `/tickets/{id}/resolution-automations/{action_id}/execute` | Admin/analista | Executa ação definida no servidor após confirmação |
 
+Criação de contas exige `full_name`, `email`, `password` (mínimo de 12 caracteres), `role` (`analista` ou `solicitante`) e `department_id` opcional. A API impede criação e desativação de administradores por essa rota; `user_audit_events` requer migração em bancos preexistentes. A troca de senha usa `{ "current_password": "...", "new_password": "..." }` e não revoga instantaneamente os JWTs existentes (prazo máximo configurável da sessão).
+
 O corpo obrigatório para execução controlada é `{"approved":true,"expected_status":"aberto"}` (o estado deve coincidir com a prévia). Ações não podem ser inventadas pelo LLM. Chamado concluído não recebe automações. O backend não acessa sistemas externos.
 
 ## Exemplos
@@ -928,7 +941,7 @@ Criação:
 {"title":"Falha no sistema de vendas","description":"Operação indisponível na filial","requester_id":1,"category_id":2,"priority":"alta"}
 ```
 
-Erros seguem HTTP 401 (não autenticado), 403 (sem perfil), 404 (não encontrado), 409 (conflito), 422 (validação), 502 (resposta inválida da IA) ou 503 (indisponibilidade), conforme a rota. Não há paginação server-side nem API pública de redefinição de senha; ambos são candidatos a evolução empresarial.
+Erros seguem HTTP 401 (não autenticado), 403 (sem perfil), 404 (não encontrado), 409 (conflito), 422 (validação), 502 (resposta inválida da IA) ou 503 (indisponibilidade), conforme a rota. A listagem de contas possui `limit`/`offset`; a listagem geral de tickets continua sem paginação server-side. Não existe redefinição de senha por e-mail nem convite externo: essas integrações exigem um provedor validado antes de uso empresarial.
 
 
 ---
@@ -1023,7 +1036,7 @@ O script produzirá SVG e PNG em `docs/uml/imagens/` a partir dos arquivos Plant
 
 # Segurança e privacidade — projeto de engenharia
 
-**Status:** controles propostos para as Partes 2–6; **não** declarar o projeto seguro para produção com base apenas neste documento.
+**Status:** controles de aplicação parcialmente implementados e testados no MVP; **não** declarar o projeto seguro para produção com base apenas neste documento.
 
 ## 1. Dados e fronteiras de confiança
 
@@ -1049,8 +1062,8 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 
 ## 3. Autenticação, sessões e controle de acesso
 
-- **Planejado:** hash de senhas usando algoritmo de derivação adequado (Argon2id); nunca criptografia reversível nem hash simples.
-- Tokens JWT só serão utilizados após definir expiração, rotação/revogação e forma de armazenamento. Para aplicação web, avaliar cookie `HttpOnly`, `Secure` e `SameSite` e a proteção CSRF correspondente; não tratar JWT como proteção suficiente por si só.
+- **Implementado:** hashes Argon2id para contas; criação por administrador (somente analista/solicitante), desativação sem exclusão e troca da própria senha com auditoria. O fluxo de criação ainda depende de uma senha inicial transmitida por canal seguro.
+- **Implementado parcialmente:** JWT curto em memória e validação do status ativo da conta em cada requisição. **Pendente:** revogação imediata por sessão, rotação central, gestão corporativa de identidade. Para aplicação web empresarial, avaliar cookie `HttpOnly`, `Secure` e `SameSite`, e proteção CSRF correspondente.
 - Rate limit de login, erros genéricos e registro de tentativas suspeitas sem incluir credenciais.
 - Aplicar autorização por perfil **e** por vínculo ao objeto; UI não substitui verificação de API.
 - Privilégios mínimos para a conta do banco e para a chave da API de IA.
@@ -1060,6 +1073,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 - `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
 - `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
 - Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- O CI inclui auditoria de dependências Python e npm, com execução semanal; foram atualizados FastAPI, Starlette, AnyIO, PyJWT, pytest e python-dotenv após alertas encontrados. Atualizações futuras exigem revisão de CI.
 - Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
 - Migrações versionadas e backups antes de alterações destrutivas.
 
@@ -1096,10 +1110,11 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 
 | Workflow | Verificação | Escopo |
 |---|---|---|
-| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas |
+| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas, administração e auditoria de contas |
 | [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
-| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação de chamado, CSV, plano e confirmação de automação |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação e desativação de contas, criação de chamado, CSV, plano e confirmação de automação |
 | [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
+| [Dependency Security Audit](../../.github/workflows/dependency-audit.yml) | `pip-audit` e `npm audit --audit-level=high` | Alertas públicos de dependências em PRs e a cada semana; não equivale a pentest |
 
 CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
 
@@ -1116,6 +1131,8 @@ O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` 
 ## Validação manual obrigatória antes de release
 
 - Login com conta válida; logout e expiração de JWT.
+- Administrador cria, desativa/reativa conta; analista e solicitante não acessam gestão de usuários; conferir eventos em `user_audit_events`.
+- Conta ativa consegue trocar a própria senha fornecendo a senha atual; senha incorreta não altera hash.
 - Criar e localizar um chamado; alterar prioridade e conferir recálculo de SLA; avançar status e inspecionar auditoria.
 - Conferir que solicitante não visualiza chamados alheios nem comentários internos.
 - Exportar CSV filtrado e abrir em planilha; não interpretar títulos começando em `=`, `+`, `-` ou `@` como fórmulas.
@@ -1191,7 +1208,18 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Copie o resultado **somente** para seu `.env` local. Não compartilhe o segredo no chat, nem faça commit de `.env`. Evite `@`, `:`, `/` e `#` na senha usada no URL do PostgreSQL (ou faça URL-encoding dos caracteres especiais).
 
-## 3. Subir aplicação (sem apagar dados)
+## 3. Atualizar volume PostgreSQL existente (sem descartar dados)
+
+Se o volume foi criado **antes** da funcionalidade de administração de contas, aplique a migração idempotente após fazer backup e antes de subir a nova API. O comando abaixo usa o serviço PostgreSQL configurado no `compose.yaml` e não depende de credenciais digitadas na linha de comando:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d database
+Get-Content -Raw .\db\migrations\20261109_user_account_audit.sql | docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
+```
+
+O comando cria somente `user_audit_events` e seu índice, sem apagar registros. Em banco recém-inicializado, essa tabela já existe. Não reexecute `db/init/01_schema.sql` sobre um banco em uso.
+
+## 4. Subir aplicação (sem apagar dados)
 
 ```powershell
 docker compose -f compose.yaml -f compose.app.yaml config --quiet
@@ -1218,7 +1246,7 @@ docker compose -f compose.yaml -f compose.app.yaml exec backend python -m script
 
 Digite uma senha forte quando o terminal solicitar. O script se recusa a sobrescrever e-mails existentes. Use esse comando apenas na base que você administra.
 
-## 4. IA
+## 5. IA
 
 O Docker usa `AI_PROVIDER=mock` inicialmente. Isso permite demonstrar o fluxo, **mas não é um LLM**.
 
@@ -1245,7 +1273,7 @@ O teste usa apenas dados fictícios e não substitui a validação da conexão d
 
 Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apontando para o Ollama local em `http://127.0.0.1:11434`. API OpenAI é opcional e pode gerar cobrança; a chave fica somente no backend.
 
-## 5. Verificações antes de release
+## 6. Verificações antes de release
 
 - Verifique que `JWT_SECRET_KEY` é aleatório/privado, que o modo `APP_ENVIRONMENT=production` recusa segredos fracos e que `/api/openapi.json` não está disponível.
 - Em `http://127.0.0.1:8080`, teste login, listagem e criação de tickets, filtros/CSV, Equipes, Central de IA e resolução supervisionada.
@@ -1263,7 +1291,7 @@ docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'pg_du
 
 O processo de restauração deve ser validado **somente em banco de teste descartável** antes de qualquer uso com dados importantes. Nunca faça backup em repositório público.
 
-## 6. Encerramento e deploy externo
+## 7. Encerramento e deploy externo
 
 Pare containers sem apagar volumes:
 
@@ -1275,13 +1303,13 @@ docker compose -f compose.yaml -f compose.app.yaml down
 
 O compose publica frontend somente em `127.0.0.1`. Para hospedagem pública, primeiro configure domínio, proxy HTTPS/TLS, secrets no provedor, storage persistente gerenciado, backups automáticos, monitoramento, proteção de autenticação, licenças e política de privacidade. **Nenhum deploy externo foi realizado por este guia.** A aplicação não deve ser apresentada como pronta para uso corporativo antes de cumprir essas condições.
 
-## 7. Ordem de PRs
+## 8. Histórico de PRs
 
 - PR #23: provedor Ollama e visibilidade do modelo.
 - PR #24: planos e automações aprovadas.
 - PR #25: Equipes, Central de IA, CSV, stack Docker, bootstrap, testes e documentação.
 
-Integrar na ordem **#23 → #24 → #25** após revisão e testes locais. Não publicar a `main` automaticamente nem apagar o histórico do Git.
+Os PRs **#23, #24 e #25 foram integrados em `develop` em 09/11/2026** com testes automatizados concluídos. A gestão de contas, migração de auditoria e verificações adicionais foram desenvolvidas no PR #26. Isso **não** representa deploy público nem substitui homologação com Ollama e infraestrutura real. Não publicar a `main` automaticamente nem apagar o histórico do Git.
 
 
 ---

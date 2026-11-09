@@ -1,6 +1,6 @@
 # Segurança e privacidade — projeto de engenharia
 
-**Status:** controles propostos para as Partes 2–6; **não** declarar o projeto seguro para produção com base apenas neste documento.
+**Status:** controles de aplicação parcialmente implementados e testados no MVP; **não** declarar o projeto seguro para produção com base apenas neste documento.
 
 ## 1. Dados e fronteiras de confiança
 
@@ -26,8 +26,8 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 
 ## 3. Autenticação, sessões e controle de acesso
 
-- **Planejado:** hash de senhas usando algoritmo de derivação adequado (Argon2id); nunca criptografia reversível nem hash simples.
-- Tokens JWT só serão utilizados após definir expiração, rotação/revogação e forma de armazenamento. Para aplicação web, avaliar cookie `HttpOnly`, `Secure` e `SameSite` e a proteção CSRF correspondente; não tratar JWT como proteção suficiente por si só.
+- **Implementado:** hashes Argon2id para contas; criação por administrador (somente analista/solicitante), desativação sem exclusão e troca da própria senha com auditoria. O fluxo de criação ainda depende de uma senha inicial transmitida por canal seguro.
+- **Implementado parcialmente:** JWT curto em memória e validação do status ativo da conta em cada requisição. **Pendente:** revogação imediata por sessão, rotação central, gestão corporativa de identidade. Para aplicação web empresarial, avaliar cookie `HttpOnly`, `Secure` e `SameSite`, e proteção CSRF correspondente.
 - Rate limit de login, erros genéricos e registro de tentativas suspeitas sem incluir credenciais.
 - Aplicar autorização por perfil **e** por vínculo ao objeto; UI não substitui verificação de API.
 - Privilégios mínimos para a conta do banco e para a chave da API de IA.
@@ -37,6 +37,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 - `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
 - `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
 - Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- O CI inclui auditoria de dependências Python e npm, com execução semanal; foram atualizados FastAPI, Starlette, AnyIO, PyJWT, pytest e python-dotenv após alertas encontrados. Atualizações futuras exigem revisão de CI.
 - Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
 - Migrações versionadas e backups antes de alterações destrutivas.
 

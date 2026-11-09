@@ -22,3 +22,18 @@
 .logout-action { border: 1px solid #cad9ed; border-radius: 8px; background: transparent; color: #293c5a; padding: 7px 12px; cursor: pointer; font-size: 12px; font-weight: 650; }
 .logout-action:hover { background: #f1f6ff; }
 .logout-action:focus-visible { outline: 3px solid #a2bdff; outline-offset: 2px; }
+
+
+.operations-accounts { display: grid; gap: 16px; }
+.account-form { border-top: 1px solid #e0e6f0; padding-top: 18px; margin-top: 12px; }
+.account-form h3, .operations-panel h3 { margin: 0 0 14px; color: #203454; }
+.account-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.account-form-grid label { display: flex; flex-direction: column; gap: 6px; color: #31435d; font-size: 13px; font-weight: 600; }
+.account-form-grid input, .account-form-grid select { width: 100%; border: 1px solid #ced9e7; background: #fff; border-radius: 8px; min-height: 39px; padding: 8px 10px; font: inherit; font-weight: 400; }
+.account-form-grid input:focus-visible, .account-form-grid select:focus-visible { outline: 3px solid #a2bdff; outline-offset: 2px; }
+.account-primary { border: 0; border-radius: 8px; background: #2c58a5; color: #fff; padding: 10px 16px; margin-top: 14px; cursor: pointer; font-weight: 650; }
+.account-secondary { border: 1px solid #c9d7ec; border-radius: 7px; color: #253955; background: #fff; padding: 7px 10px; cursor: pointer; }
+.account-primary:disabled, .account-secondary:disabled { opacity: .55; cursor: not-allowed; }
+.account-email { color: #627189; font-size: 12px; overflow-wrap: anywhere; }
+.account-notice { color: #206447; font-size: 14px; }
+@media (max-width: 650px) { .account-form-grid { grid-template-columns: 1fr; } }
