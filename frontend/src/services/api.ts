@@ -1,4 +1,4 @@
-import type { Analyst } from '../types/tickets'
+import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
 import type { TicketCreate } from '../types/tickets'
 import type { Ticket, TicketHistoryEvent, TicketComment, TicketCommentCreate } from '../types/tickets'
@@ -43,6 +43,11 @@ async function apiRequest<T>(
       throw new Error('Você não possui permissão para acessar esses dados.')
     }
 
+    const data: unknown = await response.json().catch(() => null)
+    if (data && typeof data === 'object' && 'detail' in data &&
+        typeof data.detail === 'string' && data.detail.length <= 200) {
+      throw new Error(data.detail)
+    }
     throw new Error(`Erro na API: HTTP ${response.status}`)
   }
 
@@ -264,6 +269,43 @@ export function assignTicket(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ assignee_id: assigneeId }),
+    },
+  )
+}
+
+export function getTicketAISuggestions(
+  token: string,
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<TicketAISuggestion[]> {
+  return apiRequest<TicketAISuggestion[]>(`/tickets/${ticketId}/ai-suggestions`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal,
+  })
+}
+
+export function generateTicketAISuggestion(
+  token: string,
+  ticketId: number,
+): Promise<TicketAISuggestion> {
+  return apiRequest<TicketAISuggestion>(`/tickets/${ticketId}/ai-suggestions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export function reviewTicketAISuggestion(
+  token: string,
+  ticketId: number,
+  suggestionId: number,
+  decision: Exclude<AIReviewStatus, 'pendente'>,
+): Promise<TicketAIReviewResult> {
+  return apiRequest<TicketAIReviewResult>(
+    `/tickets/${ticketId}/ai-suggestions/${suggestionId}/review`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ decision }),
     },
   )
 }
