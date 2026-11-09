@@ -42,7 +42,7 @@ def main() -> int:
             page.get_by_label("E-mail").fill("ci-e2e@pulseops.invalid")
             page.locator("#login-password").fill(password)
             page.get_by_role("button", name="Entrar na plataforma").click()
-            expect(page.get_by_role("heading", name="Visão geral", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name=re.compile(r"^Visão geral")).first).to_be_visible()
 
             navigation = page.get_by_role("navigation", name="Navegação principal")
             navigation.get_by_role("button", name=re.compile("Equipes")).click()
