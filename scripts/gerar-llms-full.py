@@ -24,7 +24,7 @@ DOCUMENTS = [
 header = """# PulseOps AI — Contexto textual completo para LLMs
 
 > Este arquivo é gerado automaticamente. Altere os documentos `.md` originais e execute `python scripts/gerar-llms-full.py`.
-> Escopo atual: Parte 1 (protótipo offline, scripts SQL/Docker preparados). APIs, login, React, LLM e deploy são planos futuros, não recursos implementados.
+> Escopo atual: aplicação React/FastAPI/PostgreSQL em desenvolvimento, com SLA e triagem supervisionada (modo demonstrativo ou provedor externo). Deploy e validação de produção ainda pendentes.
 > Diagramas e imagens são referenciados por caminhos relativos no documento de origem, sem reprodução binária.
 """
 chunks = [header]
