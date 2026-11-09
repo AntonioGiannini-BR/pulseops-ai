@@ -8,6 +8,7 @@ import type {
   Ticket,
   TicketPriority,
   TicketStatus,
+  TicketSlaStatus,
 } from '../types/tickets'
 
 import '../styles/ticket-details.css'
@@ -34,6 +35,28 @@ const priorityLabels: Record<TicketPriority, string> = {
   media: 'Média',
   alta: 'Alta',
   critica: 'Crítica',
+}
+
+const slaLabels: Record<TicketSlaStatus, string> = {
+  sem_prazo: 'Sem prazo definido',
+  em_dia: 'Em dia',
+  atrasado: 'Atrasado',
+  dentro_do_prazo: 'Resolvido no prazo',
+  fora_do_prazo: 'Resolvido fora do prazo',
+}
+
+function calcularSla(ticket: Ticket): TicketSlaStatus {
+  if (!ticket.due_at) return 'sem_prazo'
+
+  const prazo = new Date(ticket.due_at).getTime()
+  if (Number.isNaN(prazo)) return 'sem_prazo'
+
+  if (ticket.resolved_at) {
+    const resolucao = new Date(ticket.resolved_at).getTime()
+    return resolucao > prazo ? 'fora_do_prazo' : 'dentro_do_prazo'
+  }
+
+  return Date.now() > prazo ? 'atrasado' : 'em_dia'
 }
 
 const nextStatus: Record<TicketStatus, TicketStatus | null> = {
@@ -168,7 +191,14 @@ export default function TicketDetails({
       )
 
       setTicket((current) =>
-        current ? { ...current, status: updated.status } : current
+        current
+          ? {
+              ...current,
+              status: updated.status,
+              resolved_at: updated.resolved_at,
+              sla_status: undefined,
+            }
+          : current
       )
 
       onStatusChanged(ticketId, updated.status)
@@ -271,6 +301,16 @@ export default function TicketDetails({
                 <dt>Data de abertura</dt>
                 <dd>{formatDate(ticket.opened_at)}</dd>
               </div>
+
+              <div>
+                <dt>Prazo de SLA</dt>
+                <dd>{ticket.due_at ? formatDate(ticket.due_at) : 'Não definido'}</dd>
+              </div>
+
+              <div>
+                <dt>Situação do SLA</dt>
+                <dd>{slaLabels[calcularSla(ticket)]}</dd>
+              </div>
             </div>
 
             {canUpdateStatus && nextStatus[ticket.status] !== null && (
@@ -303,9 +343,16 @@ export default function TicketDetails({
                 token={token}
                 ticketId={ticketId}
                 priority={ticket.priority}
-                onUpdated={(priority) => {
+                onUpdated={(priority, dueAt) => {
                   setTicket((current) =>
-                    current ? { ...current, priority } : current
+                    current
+                      ? {
+                          ...current,
+                          priority,
+                          due_at: dueAt,
+                          sla_status: undefined,
+                        }
+                      : current
                   )
                   onPriorityChanged(ticketId, priority)
                   setHistoryRevision((current) => current + 1)

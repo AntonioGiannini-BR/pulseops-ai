@@ -185,6 +185,21 @@ export default function Dashboard({
             <span> horas</span>
           </div>
         </div>
+
+        <div className="resolution-card">
+          <div>
+            <span className="resolution-label">
+              Cumprimento de SLA
+            </span>
+            <p>
+              Percentual dos chamados concluídos com prazo definido e resolvidos dentro do prazo.
+            </p>
+          </div>
+          <div className="resolution-value">
+            {formatarHoras(summary?.cumprimento_sla_pct)}
+            <span> %</span>
+          </div>
+        </div>
       </section>
     </>
   )
