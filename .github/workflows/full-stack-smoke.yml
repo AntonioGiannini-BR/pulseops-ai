@@ -75,6 +75,7 @@ jobs:
         run: |
           set -euo pipefail
           E2E_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          echo "::add-mask::$E2E_PASSWORD"
           printf 'PULSEOPS_E2E_PASSWORD=%s\n' "$E2E_PASSWORD" >> "$GITHUB_ENV"
           printf '%s' "$E2E_PASSWORD" | docker compose -f compose.yaml -f compose.app.yaml \
             exec -T backend python -c 'import sys; from scripts.create_admin import create_admin; create_admin(email="ci-e2e@pulseops.invalid", full_name="E2E Administrador", password=sys.stdin.read())'
