@@ -39,7 +39,7 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET_KEY deve ser aleatória e ter pelo menos 32 caracteres em produção")
             if self.database_url == "postgresql+psycopg:///pulseops_ai":
                 raise ValueError("DATABASE_URL deve ser definido explicitamente em produção")
-            if "*" in self.cors_origins.split(","):
+            if any(origin.strip() == "*" for origin in self.cors_origins.split(",")):
                 raise ValueError("CORS_ORIGINS não pode conter '*' em produção")
         return self
 

@@ -180,11 +180,15 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
             <div className="status-note" role="status">
               <span>ⓘ</span>{' '}
 
-              {loading
-                ? 'Carregando indicadores da operação...'
-                : error
-                  ? `Erro ao carregar indicadores: ${error}`
-                  : 'Indicadores atualizados com dados do PostgreSQL.'}
+              {userRole === null
+                ? (error ?? 'Verificando permissões da conta...')
+                : userRole === 'solicitante'
+                  ? 'Você tem acesso aos chamados vinculados à sua conta.'
+                  : loading
+                    ? 'Carregando indicadores da operação...'
+                    : error
+                      ? `Erro ao carregar indicadores: ${error}`
+                      : 'Indicadores atualizados com dados do PostgreSQL.'}
             </div>
 
             {userRole !== null && currentPage === 'overview' && (
