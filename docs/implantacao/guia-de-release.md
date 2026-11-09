@@ -123,4 +123,4 @@ O compose publica frontend somente em `127.0.0.1`. Para hospedagem pública, pri
 - PR #24: planos e automações aprovadas.
 - PR #25: Equipes, Central de IA, CSV, stack Docker, bootstrap, testes e documentação.
 
-Integrar na ordem **#23 → #24 → #25** após revisão e testes locais. Não publicar a `main` automaticamente nem apagar o histórico do Git.
+Os PRs **#23, #24 e #25 foram integrados em `develop` em 09/11/2026** com testes automatizados concluídos. A gestão de contas, migração de auditoria e verificações adicionais foram desenvolvidas no PR #26. Isso **não** representa deploy público nem substitui homologação com Ollama e infraestrutura real. Não publicar a `main` automaticamente nem apagar o histórico do Git.
