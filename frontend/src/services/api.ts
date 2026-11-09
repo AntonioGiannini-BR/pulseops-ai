@@ -34,6 +34,9 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
+      if (path !== '/auth/login') {
+        window.dispatchEvent(new Event('pulseops:session-expired'))
+      }
       throw new Error(path === '/auth/login' ? 'E-mail ou senha inválidos.' : 'Sessão inválida ou expirada. Faça login novamente.')
     }
 

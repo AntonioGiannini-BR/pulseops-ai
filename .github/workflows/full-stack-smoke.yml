@@ -1,0 +1,50 @@
+name: Full Stack Smoke
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure isolated test environment
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_DB=pulseops_ai
+          POSTGRES_USER=pulseops
+          POSTGRES_PASSWORD=ci_only_database_password
+          POSTGRES_PORT=55432
+          JWT_SECRET_KEY=ci_only_jwt_secret_of_at_least_32_random_test_characters
+          APP_PORT=18080
+          AI_PROVIDER=mock
+          EOF
+
+      - name: Build and start full stack
+        run: docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+
+      - name: Smoke test frontend, proxy, DB and restricted routes
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error http://127.0.0.1:18080/ | grep -qi '<html'
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health/db | grep -q '"database":"connected"'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/ai/overview)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/teams/summary)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/openapi.json)" = "404"
+          curl -sI http://127.0.0.1:18080/ | grep -qi 'x-content-type-options: nosniff'
+
+      - name: Show containers on failure
+        if: failure()
+        run: |
+          docker compose -f compose.yaml -f compose.app.yaml ps
+          docker compose -f compose.yaml -f compose.app.yaml logs --no-color --tail=80
+
+      - name: Stop isolated stack
+        if: always()
+        run: docker compose -f compose.yaml -f compose.app.yaml down
