@@ -167,3 +167,41 @@ def test_guia_exige_permissao_e_nao_modifica_chamado(context, monkeypatch):
             text("SELECT COUNT(*) FROM ticket_history WHERE ticket_id=:id"),
             {"id": context["id"]},
         ).scalar_one() == 0
+
+def test_chamado_concluido_nao_recebe_automacoes(context):
+    with engine.begin() as conn:
+        conn.execute(
+            text("""
+                UPDATE tickets
+                SET status='resolvido', resolved_at=NOW()
+                WHERE id=:id
+            """),
+            {"id": context["id"]},
+        )
+    catalog = client.get(url(context), headers=context["admin"])
+    assert catalog.status_code == 200
+    assert all(not item["available"] for item in catalog.json()["actions"])
+    for action in ("diagnose_platform", "send_guidance", "advance_workflow"):
+        response = execute(context, action, context["admin"], status="resolvido")
+        assert response.status_code == 409, response.text
+    with engine.connect() as conn:
+        assert conn.execute(
+            text("SELECT COUNT(*) FROM ticket_history WHERE ticket_id=:id"),
+            {"id": context["id"]},
+        ).scalar_one() == 0
+
+
+def test_erro_na_auditoria_desfaz_publicacao(context, monkeypatch):
+    def audit_unavailable(*args, **kwargs):
+        raise RuntimeError("Falha na auditoria")
+
+    monkeypatch.setattr(
+        "app.api.resolution_assistant.record_ticket_history", audit_unavailable
+    )
+    with pytest.raises(RuntimeError, match="Falha na auditoria"):
+        execute(context, "send_guidance", context["admin"])
+    with engine.connect() as conn:
+        assert conn.execute(
+            text("SELECT COUNT(*) FROM ticket_comments WHERE ticket_id=:id"),
+            {"id": context["id"]},
+        ).scalar_one() == 0
