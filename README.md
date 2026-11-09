@@ -60,6 +60,14 @@ npm run dev
 
 Acesse `http://localhost:5173`. A API de desenvolvimento possui Swagger em `http://127.0.0.1:8010/docs`. No Docker com `APP_ENVIRONMENT=production`, Swagger público fica desabilitado.
 
+Para verificar o Ollama **já instalado no Windows**, antes de conectar o FastAPI, execute na raiz do projeto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script verifica o modelo e uma resposta JSON com um texto fictício, sem executar ações.
+
 ## Stack completa em Docker (demonstração privada)
 
 Use `compose.app.yaml` sobre `compose.yaml`: PostgreSQL + FastAPI + Nginx/React, com acesso restrito à máquina local por padrão. Requer `JWT_SECRET_KEY` privado de no mínimo 32 caracteres no `.env` da raiz.
@@ -74,7 +82,7 @@ O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo 
 
 ## Qualidade e documentação
 
-- [Testes e checklist de release](docs/testes/plano-de-testes.md)
+- [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
 - [Contrato implementado da API](docs/api/contrato-api.md)
 - [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
 - [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
