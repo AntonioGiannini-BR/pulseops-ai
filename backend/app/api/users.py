@@ -7,7 +7,7 @@ import re
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -29,7 +29,7 @@ class UserCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     full_name: str = Field(min_length=2, max_length=150)
     email: str = Field(min_length=5, max_length=255)
-    password: str = Field(min_length=12, max_length=128)
+    password: SecretStr = Field(min_length=12, max_length=128)
     role: Literal["analista", "solicitante"]
     department_id: int | None = Field(default=None, gt=0)
 
@@ -115,7 +115,7 @@ def create_user(
             {
                 "name": payload.full_name,
                 "email": payload.email,
-                "password_hash": hash_password(payload.password),
+                "password_hash": hash_password(payload.password.get_secret_value()),
                 "role": payload.role,
                 "department_id": payload.department_id,
             },
