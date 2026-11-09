@@ -1,5 +1,7 @@
 # Plano do projeto — PulseOps AI
 
+> **Nota histórica:** este documento registra o plano original da Parte 1. A implementação atual e o estado de validação estão descritos no [README](../../README.md) e no [guia de release](../implantacao/guia-de-release.md); itens abaixo marcados como "planejados" não refletem necessariamente o código atual.
+
 **Documento:** termo de abertura e plano executivo de desenvolvimento.  
 **Versão:** 0.2 (Parte 1) • **Responsável:** mantenedor do repositório.  
 **Status:** planejamento em andamento; protótipo offline e scripts SQL preparados, banco pendente de validação local.
