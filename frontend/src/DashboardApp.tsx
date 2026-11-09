@@ -3,6 +3,8 @@ import Dashboard from './pages/Dashboard'
 import Tickets from './pages/Tickets'
 import Teams from './pages/Teams'
 import AICenter from './pages/AICenter'
+import Users from './pages/Users'
+import Account from './pages/Account'
 import './styles/operations.css'
 import Sidebar from './components/Sidebar'
 
@@ -12,13 +14,15 @@ import type { AuthenticatedUser } from './types/tickets'
 
 const REFRESH_INTERVAL_MS = 30_000
 
-type Page = 'overview' | 'tickets' | 'teams' | 'ai'
+type Page = 'overview' | 'tickets' | 'teams' | 'ai' | 'users' | 'account'
 
 const pageNames: Record<Page, string> = {
   overview: 'Visão geral',
   tickets: 'Chamados',
   teams: 'Equipes',
   ai: 'Central de IA',
+  users: 'Usuários',
+  account: 'Minha conta',
 }
 
 const pageDescriptions: Record<Page, string> = {
@@ -26,6 +30,8 @@ const pageDescriptions: Record<Page, string> = {
   tickets: 'Gerencie e acompanhe os chamados da operação.',
   teams: 'Visualize equipes e departamentos.',
   ai: 'Inteligência aplicada ao atendimento.',
+  users: 'Administre as contas da plataforma com segurança.',
+  account: 'Consulte seus dados e proteja sua conta.',
 }
 
 interface DashboardAppProps {
@@ -114,7 +120,8 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
   }, [token, userRole])
 
   function navigate(page: Page) {
-    if (userRole === 'solicitante' && page !== 'tickets') return
+    if (page === 'users' && userRole !== 'admin') return
+    if (userRole === 'solicitante' && page !== 'tickets' && page !== 'account') return
     setCurrentPage(page)
     setMenuOpen(false)
   }
@@ -205,6 +212,8 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
 
             {userRole !== null && userRole !== 'solicitante' && currentPage === 'teams' && <Teams token={token} />}
             {userRole !== null && userRole !== 'solicitante' && currentPage === 'ai' && <AICenter token={token} />}
+            {userRole === 'admin' && currentPage === 'users' && <Users token={token} />}
+            {userRole !== null && currentPage === 'account' && <Account token={token} onLogout={onLogout} />}
           </section>
         </div>
       </main>
