@@ -97,6 +97,7 @@ O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo 
 ## Qualidade e documentação
 
 - [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
+- **Auditoria de dependências:** `pip-audit` e `npm audit` executados em Pull Requests, em `develop`/`main` e semanalmente.
 - [Contrato implementado da API](docs/api/contrato-api.md)
 - [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
 - [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
@@ -226,6 +227,8 @@ O arquivo [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) valida l
 ## Fonte: `docs/planejamento/plano-geral.md`
 
 # Plano do projeto — PulseOps AI
+
+> **Nota histórica:** este documento registra o plano original da Parte 1. A implementação atual e o estado de validação estão descritos no [README](../../README.md) e no [guia de release](../implantacao/guia-de-release.md); itens abaixo marcados como "planejados" não refletem necessariamente o código atual.
 
 **Documento:** termo de abertura e plano executivo de desenvolvimento.  
 **Versão:** 0.2 (Parte 1) • **Responsável:** mantenedor do repositório.  
@@ -1070,6 +1073,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 - `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
 - `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
 - Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- O CI inclui auditoria de dependências Python e npm, com execução semanal; foram atualizados FastAPI, Starlette, AnyIO, PyJWT, pytest e python-dotenv após alertas encontrados. Atualizações futuras exigem revisão de CI.
 - Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
 - Migrações versionadas e backups antes de alterações destrutivas.
 
@@ -1110,6 +1114,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 | [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
 | [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação e desativação de contas, criação de chamado, CSV, plano e confirmação de automação |
 | [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
+| [Dependency Security Audit](../../.github/workflows/dependency-audit.yml) | `pip-audit` e `npm audit --audit-level=high` | Alertas públicos de dependências em PRs e a cada semana; não equivale a pentest |
 
 CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
 
@@ -1304,7 +1309,7 @@ O compose publica frontend somente em `127.0.0.1`. Para hospedagem pública, pri
 - PR #24: planos e automações aprovadas.
 - PR #25: Equipes, Central de IA, CSV, stack Docker, bootstrap, testes e documentação.
 
-Integrar na ordem **#23 → #24 → #25** após revisão e testes locais. Não publicar a `main` automaticamente nem apagar o histórico do Git.
+Os PRs **#23, #24 e #25 foram integrados em `develop` em 09/11/2026** com testes automatizados concluídos. A gestão de contas, migração de auditoria e verificações adicionais foram desenvolvidas no PR #26. Isso **não** representa deploy público nem substitui homologação com Ollama e infraestrutura real. Não publicar a `main` automaticamente nem apagar o histórico do Git.
 
 
 ---
