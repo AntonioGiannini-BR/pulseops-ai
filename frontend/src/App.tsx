@@ -13,5 +13,5 @@ export default function App() {
     return <Login onAuthenticated={handleAuthenticated} />
   }
 
-  return <DashboardApp token={token} />
+  return <DashboardApp token={token} onLogout={() => setToken(null)} />
 }

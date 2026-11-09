@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import Tickets from './pages/Tickets'
+import Teams from './pages/Teams'
+import AICenter from './pages/AICenter'
+import './styles/operations.css'
 import Sidebar from './components/Sidebar'
 
 import { getDashboardSummary } from './services/api'
@@ -26,9 +29,10 @@ const pageDescriptions: Record<Page, string> = {
 
 interface DashboardAppProps {
   token: string
+  onLogout: () => void
 }
 
-export default function DashboardApp({ token }: DashboardAppProps) {
+export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
   const [currentPage, setCurrentPage] = useState<Page>('overview')
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -120,8 +124,11 @@ export default function DashboardApp({ token }: DashboardAppProps) {
 
           <div className="top-actions">
             <span className="environment">
-              ● Desenvolvimento
+              ● {import.meta.env.VITE_APP_ENV === 'production' ? 'Demonstração online' : 'Desenvolvimento'}
             </span>
+            <button type="button" className="logout-action" onClick={onLogout}>
+              Sair
+            </button>
           </div>
         </header>
 
@@ -166,21 +173,8 @@ export default function DashboardApp({ token }: DashboardAppProps) {
               <Tickets token={token} />
             )}
 
-            {currentPage !== 'overview' && currentPage !== 'tickets' && (
-            <div className="panel">
-              <div className="panel-top">
-                <div>
-                  <h2>
-                    {pageNames[currentPage]}
-                  </h2>
-
-                  <p>
-                    {'Funcionalidade em desenvolvimento.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            )}
+            {currentPage === 'teams' && <Teams token={token} />}
+            {currentPage === 'ai' && <AICenter token={token} />}
           </section>
         </div>
       </main>

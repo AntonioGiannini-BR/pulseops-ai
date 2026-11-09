@@ -27,3 +27,22 @@ export interface LoginResponse {
   access_token: string
   token_type: string
 }
+
+export interface TeamSummary {
+  id: number
+  name: string
+  active_users: number
+  analysts: number
+  tickets_total: number
+  tickets_open: number
+}
+
+export interface AIOverview {
+  suggestions_total: number
+  pending: number
+  approved: number
+  rejected: number
+  ollama: number
+  demonstration: number
+  external_models: number
+}

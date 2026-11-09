@@ -1,3 +1,4 @@
+import type { TeamSummary, AIOverview } from '../types/api'
 import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
 import type { ResolutionActionId, ResolutionAutomationCatalog, ResolutionAutomationResult, ResolutionGuideResponse, TicketStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
@@ -356,4 +357,16 @@ export function executeResolutionAutomation(
       body: JSON.stringify({ approved: true, expected_status: expectedStatus }),
     },
   )
+}
+
+export function getTeamSummary(token: string, signal?: AbortSignal): Promise<TeamSummary[]> {
+  return apiRequest<TeamSummary[]>('/teams/summary', {
+    headers: { Authorization: `Bearer ${token}` }, signal,
+  })
+}
+
+export function getAIOverview(token: string, signal?: AbortSignal): Promise<AIOverview> {
+  return apiRequest<AIOverview>('/ai/overview', {
+    headers: { Authorization: `Bearer ${token}` }, signal,
+  })
 }

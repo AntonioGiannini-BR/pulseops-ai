@@ -12,6 +12,7 @@ from app.api.analysts import router as analysts_router
 from app.api.ai_suggestions import router as ai_suggestions_router
 from app.api.ai_provider_status import router as ai_provider_status_router
 from app.api.resolution_assistant import router as resolution_assistant_router
+from app.api.operations_overview import router as operations_overview_router
 
 app = FastAPI(
     title="PulseOps AI API",
@@ -38,6 +39,7 @@ app.include_router(analysts_router)
 app.include_router(ai_suggestions_router)
 app.include_router(ai_provider_status_router)
 app.include_router(resolution_assistant_router)
+app.include_router(operations_overview_router)
 
 @app.get("/health", tags=["Health"])
 def health_check():
