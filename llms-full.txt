@@ -71,6 +71,14 @@ npm run dev
 
 Acesse `http://localhost:5173`. A API de desenvolvimento possui Swagger em `http://127.0.0.1:8010/docs`. No Docker com `APP_ENVIRONMENT=production`, Swagger público fica desabilitado.
 
+Para verificar o Ollama **já instalado no Windows**, antes de conectar o FastAPI, execute na raiz do projeto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script verifica o modelo e uma resposta JSON com um texto fictício, sem executar ações.
+
 ## Stack completa em Docker (demonstração privada)
 
 Use `compose.app.yaml` sobre `compose.yaml`: PostgreSQL + FastAPI + Nginx/React, com acesso restrito à máquina local por padrão. Requer `JWT_SECRET_KEY` privado de no mínimo 32 caracteres no `.env` da raiz.
@@ -85,7 +93,7 @@ O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo 
 
 ## Qualidade e documentação
 
-- [Testes e checklist de release](docs/testes/plano-de-testes.md)
+- [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
 - [Contrato implementado da API](docs/api/contrato-api.md)
 - [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
 - [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
@@ -1090,10 +1098,20 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 |---|---|---|
 | [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas |
 | [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
-| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose e requisições HTTP reais | Build de API/Nginx, saúde, banco, autenticação exigida, Swagger desabilitado, cabeçalhos |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação de chamado, CSV, plano e confirmação de automação |
 | [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
 
-CI confirma o que está no commit testado; **não substitui** teste humano em navegador nem teste da qualidade das respostas do Qwen no Windows.
+CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
+
+## Teste de inferência Ollama no Windows
+
+Na raiz do projeto, com Ollama ativo e `qwen2.5:3b` já baixado:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` e verifica `/api/tags` e `/api/chat`. **Não testa** a chamada autenticada entre FastAPI e Ollama nem a qualidade da análise de um chamado real. A próxima seção permanece obrigatória.
 
 ## Validação manual obrigatória antes de release
 
@@ -1137,8 +1155,8 @@ O banco de dados local pode conter dados de teste persistentes. **Não execute `
 
 ## Pendências de produção
 
-- Suite de testes E2E automatizada em navegador (Playwright/Cypress), com cenário completo e ambiente descartável.
-- Verificações de carga, observabilidade, retenção/backup, segurança independente e teste de recuperação.
+- Expandir E2E de Chromium para outros navegadores, dispositivos, perfis de acesso e cenários de falha. A suíte atual cobre o percurso principal em ambiente descartável.
+- Verificações de carga, observabilidade, retenção/backup, segurança independente e plano de recuperação operacional. A restauração isolada do CI não prova capacidade de recuperar dados reais de produção.
 - Revisão de login contra brute force em infraestrutura distribuída; o rate limit Nginx é apenas uma camada.
 - Homologação de conectores corporativos futuros antes de ativar correções externas.
 
@@ -1217,6 +1235,14 @@ Para usar Ollama no próprio Docker:
    ```
 4. Confira o dashboard e teste um chamado fictício. Não exponha a porta 11434 à internet.
 
+Se o Ollama já está instalado diretamente no Windows, valide o serviço e a resposta JSON com o script local (na raiz do projeto):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O teste usa apenas dados fictícios e não substitui a validação da conexão da API FastAPI com o modelo.
+
 Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apontando para o Ollama local em `http://127.0.0.1:11434`. API OpenAI é opcional e pode gerar cobrança; a chave fica somente no backend.
 
 ## 5. Verificações antes de release
@@ -1225,7 +1251,7 @@ Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apo
 - Em `http://127.0.0.1:8080`, teste login, listagem e criação de tickets, filtros/CSV, Equipes, Central de IA e resolução supervisionada.
 - Confira `/api/health/db`, registros em `ticket_history` e falhas controladas ao desligar o provedor IA.
 - Confirme que a aprovação de automação aparece **antes** da execução e que o comentário público não contém senhas nem dados sensíveis.
-- Faça backup de teste e **restaure** em uma base descartável.
+- Faça backup de teste e **restaure** em uma base descartável. O CI já testa dump e restore na stack isolada; ainda é necessário validar o procedimento no ambiente de instalação real.
 
 ### Backup do PostgreSQL
 
