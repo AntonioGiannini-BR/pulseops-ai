@@ -1,0 +1,105 @@
+name: Full Stack Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure isolated test environment
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_DB=pulseops_ai
+          POSTGRES_USER=pulseops
+          POSTGRES_PASSWORD=ci_only_database_password
+          POSTGRES_PORT=55432
+          JWT_SECRET_KEY=ci_only_jwt_secret_of_at_least_32_random_test_characters
+          APP_PORT=18080
+          AI_PROVIDER=mock
+          EOF
+
+      - name: Build and start full stack
+        run: docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+
+      - name: Smoke test frontend, proxy, DB and restricted routes
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error http://127.0.0.1:18080/ | grep -qi '<html'
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health | grep -q '"status":"ok"'
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health/db | grep -q '"database":"connected"'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/ai/overview)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/teams/summary)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/openapi.json)" = "404"
+          curl -sI http://127.0.0.1:18080/ | grep -qi 'x-content-type-options: nosniff'
+
+      - name: Verify backup and restore in a disposable PostgreSQL database
+        shell: bash
+        run: |
+          set -euo pipefail
+          DUMP_PATH="$RUNNER_TEMP/pulseops-ci-backup.dump"
+          trap 'rm -f "$DUMP_PATH"' EXIT
+          docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$DUMP_PATH"
+          test -s "$DUMP_PATH"
+          docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'createdb -U "$POSTGRES_USER" pulseops_restore_ci'
+          docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d pulseops_restore_ci' < "$DUMP_PATH"
+          SOURCE_COUNT="$(docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atqc "SELECT COUNT(*) FROM categories"')"
+          RESTORED_COUNT="$(docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'psql -U "$POSTGRES_USER" -d pulseops_restore_ci -Atqc "SELECT COUNT(*) FROM categories"')"
+          test "$SOURCE_COUNT" = "$RESTORED_COUNT"
+          test "$RESTORED_COUNT" -gt 0
+          docker compose -f compose.yaml -f compose.app.yaml exec -T database \
+            sh -c 'dropdb -U "$POSTGRES_USER" pulseops_restore_ci'
+
+      - name: Setup Python for browser tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Chromium for Playwright
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+
+      - name: Provision disposable browser-test administrator
+        shell: bash
+        run: |
+          set -euo pipefail
+          E2E_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          echo "::add-mask::$E2E_PASSWORD"
+          printf 'PULSEOPS_E2E_PASSWORD=%s\n' "$E2E_PASSWORD" >> "$GITHUB_ENV"
+          printf '%s' "$E2E_PASSWORD" | docker compose -f compose.yaml -f compose.app.yaml \
+            exec -T backend python -c 'import sys; from scripts.create_admin import create_admin; create_admin(email="ci-e2e@pulseops.invalid", full_name="E2E Administrador", password=sys.stdin.read())'
+
+      - name: Browser E2E - login, tickets, AI, CSV and manual approval
+        env:
+          PULSEOPS_E2E_BASE_URL: "http://127.0.0.1:18080"
+          PULSEOPS_E2E_ALLOW_WRITE: "TEST_ONLY_DISPOSABLE_DB"
+        run: python scripts/e2e_smoke.py
+
+      - name: Upload browser screenshot if test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulseops-e2e-failure
+          path: pulseops-e2e-failure.png
+          if-no-files-found: ignore
+
+      - name: Show containers on failure
+        if: failure()
+        run: |
+          docker compose -f compose.yaml -f compose.app.yaml ps
+          docker compose -f compose.yaml -f compose.app.yaml logs --no-color --tail=80
+
+      - name: Stop isolated stack
+        if: always()
+        run: docker compose -f compose.yaml -f compose.app.yaml down

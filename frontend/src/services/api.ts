@@ -1,3 +1,4 @@
+import type { TeamSummary, AIOverview } from '../types/api'
 import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
 import type { ResolutionActionId, ResolutionAutomationCatalog, ResolutionAutomationResult, ResolutionGuideResponse, TicketStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
@@ -9,16 +10,12 @@ import type {
   LoginResponse,
 } from '../types/api'
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  if (!API_URL) {
-    throw new Error('Endereço da API não configurado.')
-  }
-
   let response: Response
 
   try {
@@ -37,6 +34,9 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
+      if (path !== '/auth/login') {
+        window.dispatchEvent(new Event('pulseops:session-expired'))
+      }
       throw new Error(path === '/auth/login' ? 'E-mail ou senha inválidos.' : 'Sessão inválida ou expirada. Faça login novamente.')
     }
 
@@ -356,4 +356,16 @@ export function executeResolutionAutomation(
       body: JSON.stringify({ approved: true, expected_status: expectedStatus }),
     },
   )
+}
+
+export function getTeamSummary(token: string, signal?: AbortSignal): Promise<TeamSummary[]> {
+  return apiRequest<TeamSummary[]>('/teams/summary', {
+    headers: { Authorization: `Bearer ${token}` }, signal,
+  })
+}
+
+export function getAIOverview(token: string, signal?: AbortSignal): Promise<AIOverview> {
+  return apiRequest<AIOverview>('/ai/overview', {
+    headers: { Authorization: `Bearer ${token}` }, signal,
+  })
 }

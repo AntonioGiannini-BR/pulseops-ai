@@ -79,7 +79,7 @@ def generate_resolution_guide(*, title: str, description: str, category: str) ->
     try:
         if settings.ai_provider == "ollama":
             response = httpx.post(
-                "http://127.0.0.1:11434/api/chat",
+                f"{settings.ollama_base_url}/api/chat",
                 json={
                     "model": settings.ollama_model,
                     "stream": False,

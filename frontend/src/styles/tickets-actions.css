@@ -39,3 +39,16 @@
     width: 100%;
   }
 }
+
+.csv-export-trigger {
+  padding: 11px 16px;
+  border: 1px solid #b9c9e0;
+  border-radius: 9px;
+  background: #fff;
+  color: #263951;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.csv-export-trigger:disabled { opacity: .5; cursor: not-allowed; }
+.csv-export-trigger:focus-visible { outline: 3px solid #9bb8ff; outline-offset: 3px; }

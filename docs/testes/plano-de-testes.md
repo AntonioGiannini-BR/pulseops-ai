@@ -1,73 +1,71 @@
-# Estratégia e plano de testes — PulseOps AI
+# Estratégia de testes e validação — PulseOps AI
 
-**Separar fatos de metas:** existem scripts SQL de smoke test, mas não há registro de execução do PostgreSQL neste ambiente. Ainda não há FastAPI ou suíte Pytest para executar. O protótipo web é uma demonstração local com dados falsos.
+## Automatizado no GitHub Actions
 
-## 1. Níveis de teste planejados
+| Workflow | Verificação | Escopo |
+|---|---|---|
+| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas |
+| [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação de chamado, CSV, plano e confirmação de automação |
+| [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
 
-1. **Unitário (futuro):** cálculo SLA, permissões, transições de status, validações e transformação de resposta da IA.
-2. **Integração API/banco (futuro):** endpoints + PostgreSQL isolado, integridade entre tickets e histórico, rollback de transação.
-3. **Contrato API (futuro):** status HTTP, validação de request/response e paginação conforme OpenAPI.
-4. **Frontend (futuro):** formulários, filtros, estados de loading/erro, acessibilidade básica.
-5. **End-to-end (futuro):** login → chamado → atribuição → resolução → alteração no painel.
-6. **Segurança (futuro):** IDOR, privilégios indevidos, limites e entradas adversariais.
+CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
 
-## 2. Casos de teste prioritários
+## Teste de inferência Ollama no Windows
 
-| ID | Caso | Esperado | Etapa |
-|---|---|---|---|
-| DB-01 | Base nova com seed | 8 tabelas, dados demo, views criadas | Parte 1 |
-| DB-02 | Prioridade inválida | Restrição do banco rejeita | Parte 1 |
-| DB-03 | Conta fictícia | Seed permanece inativa | Parte 1 |
-| API-01 | Criar chamado válido | HTTP 201, solicitante do token, SLA e histórico | Parte 2 |
-| API-02 | Campo obrigatório ausente | HTTP 422, nenhum registro criado | Parte 2 |
-| AUTH-01 | Solicitante busca chamado alheio | Acesso negado sem dados vazados | Parte 2 |
-| AUTH-02 | Solicitante altera prioridade | Acesso negado | Parte 2 |
-| SLA-01 | Prioridade alta | Prazo = abertura + 240 min | Parte 2 |
-| SLA-02 | Resolução após o prazo | Indicador `fora_do_prazo` | Parte 4 |
-| HIS-01 | Alteração de responsável | Evento de histórico com ator | Parte 2 |
-| UI-01 | Filtros da tabela | Chamados visíveis correspondem aos filtros | Parte 3 |
-| IA-01 | Sugestão pendente | Chamado não é alterado | Parte 5 |
-| IA-02 | Retorno da IA inválido/timeout | Erro controlado, triagem manual disponível | Parte 5 |
-| SEC-01 | Conteúdo malicioso de comentário | Não executar HTML/script no navegador | Parte 3 |
-
-## 3. Como validar a Parte 1 (Windows/PowerShell)
-
-Na raiz do repositório, com Docker Desktop iniciado:
+Na raiz do projeto, com Ollama ativo e `qwen2.5:3b` já baixado:
 
 ```powershell
-Copy-Item .env.example .env
-# Edite POSTGRES_PASSWORD e salve antes de iniciar
-notepad .env
-docker compose up -d
-docker compose ps
-.\scripts\testar-banco.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
 ```
 
-Para inspecionar consultas SQL:
+O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` e verifica `/api/tags` e `/api/chat`. **Não testa** a chamada autenticada entre FastAPI e Ollama nem a qualidade da análise de um chamado real. A próxima seção permanece obrigatória.
+
+## Validação manual obrigatória antes de release
+
+- Login com conta válida; logout e expiração de JWT.
+- Criar e localizar um chamado; alterar prioridade e conferir recálculo de SLA; avançar status e inspecionar auditoria.
+- Conferir que solicitante não visualiza chamados alheios nem comentários internos.
+- Exportar CSV filtrado e abrir em planilha; não interpretar títulos começando em `=`, `+`, `-` ou `@` como fórmulas.
+- Acessar Equipes e Central de IA: checar indicadores e ausência de dados pessoais no resumo.
+- Com `AI_PROVIDER=ollama`, gerar sugestão, rejeitar/aprovar e conferir que nenhuma ação foi executada sem aprovação.
+- Gerar plano de resolução com Qwen, conferir que causa é tratada como hipótese e que etapas são revisáveis.
+- Executar cada automação com confirmação explícita; verificar comentário público, histórico e que o chamado nunca é marcado como resolvido automaticamente.
+- Desligar Ollama temporariamente e conferir erro controlado e continuidade do atendimento manual.
+- Testar os containers em porta local, simular falha do PostgreSQL e conferir tratamento; restaurar base a partir de backup de teste.
+
+## Comandos
+
+No backend com PostgreSQL de teste configurado:
 
 ```powershell
-Get-Content -Raw 'db/queries/indicadores.sql' | docker compose exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
-```
-
-**Atenção:** os SQL em `db/init/` são executados só na primeira criação do volume. `docker compose down -v` apagará todos os dados do banco local: usar somente para reset intencional da demo.
-
-**Registro sugerido de evidência:** data, ambiente (versão Docker/PostgreSQL), comando, resultado, eventual falha e link para issue. Não atualizar este documento para `testado` sem execução.
-
-## 4. Comandos previstos para testes futuros (ainda não disponíveis)
-
-```powershell
-# Executar depois que a Parte 2 criar o backend e dependências
 cd backend
 python -m pytest -q
 ```
 
-A CI do GitHub Actions será configurada na Parte 6 para bloquear merges com lint/testes falhando. São metas, não verificações atuais.
+No frontend:
 
-## 5. Critérios de aprovação de release
+```powershell
+cd frontend
+npm ci
+npm run build
+```
 
-- Requisitos P0 demonstrados com dados reais de banco de teste.
-- Testes críticos de autorização e persistência passando.
-- Nenhuma falha de segurança crítica conhecida sem mitigação.
-- Documentação alinhada ao funcionamento atual; limitações explícitas.
-- Smoke test reproduzível por outra pessoa, sem credenciais fornecidas pelo autor.
-- Fluxo completo demonstrável e falhas de IA tratadas sem comprometer o suporte manual.
+Para stack Docker privada:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+Invoke-RestMethod http://127.0.0.1:8080/api/health
+Invoke-RestMethod http://127.0.0.1:8080/api/health/db
+```
+
+O banco de dados local pode conter dados de teste persistentes. **Não execute `docker compose down -v` para depurar problemas de frontend/backend.** Não use `db/init/*.sql` para migrar uma base existente.
+
+## Pendências de produção
+
+- Expandir E2E de Chromium para outros navegadores, dispositivos, perfis de acesso e cenários de falha. A suíte atual cobre o percurso principal em ambiente descartável.
+- Verificações de carga, observabilidade, retenção/backup, segurança independente e plano de recuperação operacional. A restauração isolada do CI não prova capacidade de recuperar dados reais de produção.
+- Revisão de login contra brute force em infraestrutura distribuída; o rate limit Nginx é apenas uma camada.
+- Homologação de conectores corporativos futuros antes de ativar correções externas.
+
+A documentação não afirma que uma funcionalidade foi validada manualmente sem evidência. Consulte também [o guia de release](../implantacao/guia-de-release.md).

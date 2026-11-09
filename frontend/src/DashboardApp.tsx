@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import Tickets from './pages/Tickets'
+import Teams from './pages/Teams'
+import AICenter from './pages/AICenter'
+import './styles/operations.css'
 import Sidebar from './components/Sidebar'
 
-import { getDashboardSummary } from './services/api'
+import { getDashboardSummary, getCurrentUser } from './services/api'
 import type { DashboardSummary } from './types/api'
+import type { AuthenticatedUser } from './types/tickets'
 
 const REFRESH_INTERVAL_MS = 30_000
 
@@ -26,17 +30,41 @@ const pageDescriptions: Record<Page, string> = {
 
 interface DashboardAppProps {
   token: string
+  onLogout: () => void
 }
 
-export default function DashboardApp({ token }: DashboardAppProps) {
+export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
   const [currentPage, setCurrentPage] = useState<Page>('overview')
   const [menuOpen, setMenuOpen] = useState(false)
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [userRole, setUserRole] = useState<AuthenticatedUser['role'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+    void getCurrentUser(token, controller.signal)
+      .then((user) => {
+        if (controller.signal.aborted) return
+        setUserRole(user.role)
+        if (user.role === 'solicitante') setCurrentPage('tickets')
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : 'Não foi possível identificar o usuário.')
+        }
+      })
+    return () => controller.abort()
+  }, [token])
+
+  useEffect(() => {
+    if (userRole === null || userRole === 'solicitante') {
+      setSummary(null)
+      setLoading(false)
+      return
+    }
+
     const controller = new AbortController()
     let timeoutId: ReturnType<typeof setTimeout> | undefined
 
@@ -83,9 +111,10 @@ export default function DashboardApp({ token }: DashboardAppProps) {
         clearTimeout(timeoutId)
       }
     }
-  }, [token])
+  }, [token, userRole])
 
   function navigate(page: Page) {
+    if (userRole === 'solicitante' && page !== 'tickets') return
     setCurrentPage(page)
     setMenuOpen(false)
   }
@@ -97,6 +126,7 @@ export default function DashboardApp({ token }: DashboardAppProps) {
           currentPage={currentPage}
           onNavigate={navigate}
           totalTickets={summary?.total_chamados ?? 0}
+          role={userRole ?? 'solicitante'}
         />
       </div>
 
@@ -120,8 +150,11 @@ export default function DashboardApp({ token }: DashboardAppProps) {
 
           <div className="top-actions">
             <span className="environment">
-              ● Desenvolvimento
+              ● {import.meta.env.VITE_APP_ENV === 'production' ? 'Demonstração online' : 'Desenvolvimento'}
             </span>
+            <button type="button" className="logout-action" onClick={onLogout}>
+              Sair
+            </button>
           </div>
         </header>
 
@@ -147,14 +180,18 @@ export default function DashboardApp({ token }: DashboardAppProps) {
             <div className="status-note" role="status">
               <span>ⓘ</span>{' '}
 
-              {loading
-                ? 'Carregando indicadores da operação...'
-                : error
-                  ? `Erro ao carregar indicadores: ${error}`
-                  : 'Indicadores atualizados com dados do PostgreSQL.'}
+              {userRole === null
+                ? (error ?? 'Verificando permissões da conta...')
+                : userRole === 'solicitante'
+                  ? 'Você tem acesso aos chamados vinculados à sua conta.'
+                  : loading
+                    ? 'Carregando indicadores da operação...'
+                    : error
+                      ? `Erro ao carregar indicadores: ${error}`
+                      : 'Indicadores atualizados com dados do PostgreSQL.'}
             </div>
 
-            {currentPage === 'overview' && (
+            {userRole !== null && currentPage === 'overview' && (
               <Dashboard
                 summary={summary}
                 loading={loading}
@@ -166,21 +203,8 @@ export default function DashboardApp({ token }: DashboardAppProps) {
               <Tickets token={token} />
             )}
 
-            {currentPage !== 'overview' && currentPage !== 'tickets' && (
-            <div className="panel">
-              <div className="panel-top">
-                <div>
-                  <h2>
-                    {pageNames[currentPage]}
-                  </h2>
-
-                  <p>
-                    {'Funcionalidade em desenvolvimento.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            )}
+            {userRole !== null && userRole !== 'solicitante' && currentPage === 'teams' && <Teams token={token} />}
+            {userRole !== null && userRole !== 'solicitante' && currentPage === 'ai' && <AICenter token={token} />}
           </section>
         </div>
       </main>
