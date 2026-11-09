@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getTickets } from '../services/api'
+import { csvContent } from '../utils/csv'
 import TicketDetails from '../components/TicketDetails'
 import NewTicketModal from '../components/NewTicketModal'
 import '../styles/tickets-actions.css'
@@ -100,6 +101,29 @@ export default function Tickets({ token }: TicketsProps) {
     return matchesSearch && matchesStatus && matchesPriority
   })
 
+  function exportFilteredCsv() {
+    if (filteredTickets.length === 0) return
+    const content = csvContent(
+      ['ID', 'Título', 'Prioridade', 'Status', 'Abertura'],
+      filteredTickets.map((ticket) => [
+        ticket.id,
+        ticket.title,
+        priorityLabels[ticket.priority],
+        statusLabels[ticket.status],
+        formatDate(ticket.opened_at),
+      ]),
+    )
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `pulseops-chamados-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <>
     <section className="panel table-panel">
@@ -114,6 +138,14 @@ export default function Tickets({ token }: TicketsProps) {
             {filteredTickets.length} de {tickets.length} chamados
           </span>
 
+          <button
+            type="button"
+            className="csv-export-trigger"
+            onClick={exportFilteredCsv}
+            disabled={loading || error !== null || filteredTickets.length === 0}
+          >
+            Exportar CSV
+          </button>
           <button
             type="button"
             className="new-ticket-trigger"
