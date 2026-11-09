@@ -1,4 +1,4 @@
-﻿type Page = 'overview' | 'tickets' | 'teams' | 'ai'
+﻿type Page = 'overview' | 'tickets' | 'teams' | 'ai' | 'users' | 'account'
 
 interface SidebarProps {
   currentPage: Page
@@ -22,6 +22,8 @@ export default function Sidebar({
     { page: 'tickets', label: 'Chamados', icon: '▤' },
     { page: 'teams', label: 'Equipes', icon: '♙' },
     { page: 'ai', label: 'Central de IA', icon: '✧' },
+    { page: 'users', label: 'Usuários', icon: '♙' },
+    { page: 'account', label: 'Minha conta', icon: '◇' },
   ]
 
   return (
@@ -49,7 +51,7 @@ export default function Sidebar({
       <div className="nav-label">MENU PRINCIPAL</div>
 
       <nav className="nav" aria-label="Navegação principal">
-        {menuItems.filter((item) => role !== 'solicitante' || item.page === 'tickets').map((item) => (
+        {menuItems.filter((item) => item.page === 'account' || (role === 'admin') || (role === 'analista' && item.page !== 'users') || (role === 'solicitante' && item.page === 'tickets')).map((item) => (
           <button
             key={item.page}
             type="button"
