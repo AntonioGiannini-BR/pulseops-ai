@@ -142,7 +142,7 @@ def create_ticket(
                 )
                 SELECT
                     :title, :description, :requester_id, :category_id,
-                    :priority, NOW(),
+                    p.priority, NOW(),
                     NOW() + p.resolution_minutes * INTERVAL '1 minute'
                 FROM sla_policies AS p
                 WHERE p.priority = :priority
