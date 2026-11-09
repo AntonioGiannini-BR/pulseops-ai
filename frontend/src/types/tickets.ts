@@ -11,6 +11,13 @@ export type TicketStatus =
   | 'resolvido'
   | 'fechado'
 
+export type TicketSlaStatus =
+  | 'sem_prazo'
+  | 'em_dia'
+  | 'atrasado'
+  | 'dentro_do_prazo'
+  | 'fora_do_prazo'
+
 export interface Ticket {
   id: number
   title: string
@@ -21,6 +28,9 @@ export interface Ticket {
   assignee_id: number | null
   category_id: number
   opened_at: string
+  due_at: string | null
+  resolved_at: string | null
+  sla_status?: TicketSlaStatus
 }
 
 export interface TicketCreate {
