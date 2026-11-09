@@ -6,10 +6,20 @@
 |---|---|---|
 | [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas |
 | [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
-| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose e requisições HTTP reais | Build de API/Nginx, saúde, banco, autenticação exigida, Swagger desabilitado, cabeçalhos |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação de chamado, CSV, plano e confirmação de automação |
 | [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
 
-CI confirma o que está no commit testado; **não substitui** teste humano em navegador nem teste da qualidade das respostas do Qwen no Windows.
+CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
+
+## Teste de inferência Ollama no Windows
+
+Na raiz do projeto, com Ollama ativo e `qwen2.5:3b` já baixado:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` e verifica `/api/tags` e `/api/chat`. **Não testa** a chamada autenticada entre FastAPI e Ollama nem a qualidade da análise de um chamado real. A próxima seção permanece obrigatória.
 
 ## Validação manual obrigatória antes de release
 
@@ -53,8 +63,8 @@ O banco de dados local pode conter dados de teste persistentes. **Não execute `
 
 ## Pendências de produção
 
-- Suite de testes E2E automatizada em navegador (Playwright/Cypress), com cenário completo e ambiente descartável.
-- Verificações de carga, observabilidade, retenção/backup, segurança independente e teste de recuperação.
+- Expandir E2E de Chromium para outros navegadores, dispositivos, perfis de acesso e cenários de falha. A suíte atual cobre o percurso principal em ambiente descartável.
+- Verificações de carga, observabilidade, retenção/backup, segurança independente e plano de recuperação operacional. A restauração isolada do CI não prova capacidade de recuperar dados reais de produção.
 - Revisão de login contra brute force em infraestrutura distribuída; o rate limit Nginx é apenas uma camada.
 - Homologação de conectores corporativos futuros antes de ativar correções externas.
 
