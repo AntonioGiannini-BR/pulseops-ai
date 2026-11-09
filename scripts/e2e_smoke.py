@@ -48,6 +48,21 @@ def main() -> int:
             navigation.get_by_role("button", name=re.compile("Equipes")).click()
             expect(page.get_by_role("heading", name="Equipes", exact=True).first).to_be_visible()
 
+            navigation.get_by_role("button", name=re.compile("Usuários")).click()
+            expect(page.get_by_role("heading", name="Administração de contas")).to_be_visible()
+            account_form = page.locator(".operations-accounts .account-form")
+            account_form.get_by_label("Nome completo").fill("Analista de Navegador")
+            sample_email = "e2e-" + uuid.uuid4().hex[:12] + "@pulseops.invalid"
+            account_form.get_by_label("E-mail").fill(sample_email)
+            account_form.get_by_label("Senha inicial (mínimo 12 caracteres)").fill(password)
+            account_form.get_by_role("button", name="Criar conta").click()
+            account_row = page.get_by_role("row").filter(has_text=sample_email)
+            expect(account_row).to_be_visible()
+            page.once("dialog", lambda dialog: dialog.accept())
+            account_row.get_by_role("button", name="Desativar").click()
+            expect(account_row.get_by_text("Inativa", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="Últimas alterações de contas")).to_be_visible()
+
             navigation.get_by_role("button", name=re.compile("Central de IA")).click()
             expect(page.get_by_role("heading", name="Central de IA", exact=True).first).to_be_visible()
             expect(page.get_by_text("Demonstração — regras locais")).to_be_visible()
