@@ -1,51 +1,52 @@
 # Documentação técnica — PulseOps AI
 
-> **Versão:** 0.3.0 · **Situação:** Parte 1 (protótipo offline e infraestrutura SQL/Docker preparada para execução local). **Planejados:** FastAPI, React, autenticação, IA e deploy.
+> **Versão do MVP:** 0.3.0. **Estado:** API FastAPI, interface React e PostgreSQL implementados; execução local documentada e stack Docker preparada para validação. O deploy público e a homologação empresarial continuam pendentes.
 
 ## Objetivo
 
-Construir uma plataforma de gestão de chamados corporativos com histórico, responsáveis, categorias, priorização, prazos de SLA e indicadores. Evoluir para um produto full-stack com triagem por IA generativa **apenas mediante revisão humana**. O projeto é demonstrativo e voltado a aprendizado/portfólio.
+Plataforma demonstrativa de Service Desk com autenticação, tickets, atribuição, categorias, estados, comentários, histórico, SLA, indicadores e inteligência artificial sob revisão humana.
 
-## O que realmente existe
+## Implementação atual
 
-- Dashboard HTML/CSS/JavaScript offline com dados fictícios: [`prototype/`](prototype/).
-- Scripts PostgreSQL com oito tabelas, views e dados demonstrativos: [`db/init/`](db/init/) e [`db/queries/`](db/queries/).
-- Docker Compose preparado para rodar o PostgreSQL localmente: [`compose.yaml`](compose.yaml).
-- Diagramas arquiteturais, UML editável e documentação técnica: [`docs/`](docs/00-indice.md).
-- Testes de banco **incluídos, mas sem validação real neste ambiente**: [`db/tests/`](db/tests/) e [`scripts/testar-banco.ps1`](scripts/testar-banco.ps1).
+- `backend/app/`: FastAPI, endpoints REST, autorização por JWT/perfil e transações PostgreSQL.
+- `frontend/src/`: dashboard React/TypeScript, chamados, Equipes, Central de IA, assistente de triagem e resolução.
+- `db/init/`: oito tabelas PostgreSQL, views e seed fictícia (contas inativas por padrão).
+- `compose.yaml`: PostgreSQL local com volume persistente.
+- `compose.app.yaml`: stack integrada FastAPI + React/Nginx; serviço Ollama opcional.
+- `backend/scripts/create_admin.py`: criação de conta administrativa por senha privada solicitada interativamente.
+- `backend/tests/`, `.github/workflows/`: testes de API/segurança/banco, build TS e smoke test Docker.
+- `prototype/`: referência visual estática histórica, não é a aplicação integrada.
 
-## Arquitetura de referência
+## Arquitetura lógica
 
-![Arquitetura-alvo (ainda não implementada)](docs/imagens/02-arquitetura-alvo.png)
+```text
+Navegador
+  → React (Vite / Nginx no Docker)
+  → FastAPI (JWT, RBAC, regras de negócio)
+  → PostgreSQL (tickets, histórico, políticas SLA, sugestões)
+                      ↘
+                 Ollama local ou API OpenAI (opcional)
+```
 
-O backend FastAPI atenderá uma interface React, armazenará dados no PostgreSQL e controlará a criação, transição e auditoria de chamados. Um serviço opcional de IA fará sugestões que não poderão ser aplicadas sem aprovação de um analista autorizado. Essas camadas são **planejadas**. Consulte a [arquitetura detalhada](docs/arquitetura/arquitetura.md).
+O texto de um chamado é entrada não confiável. A IA apenas sugere classificação e passos de resolução. Ações executáveis são uma lista fechada do servidor: diagnóstico da própria plataforma, publicação de template de orientação e avanço controlado de status. Cada ação exige aprovação humana.
 
 ## Modelo de domínio
 
-O esquema contém: `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`. O SQL é a fonte de verdade do modelo físico.
+O banco contém `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`. O SQL do diretório `db/init` descreve o modelo físico inicial. Migrações posteriores ficam em `db/migrations`.
 
 ![Entidades e relacionamentos](docs/banco-de-dados/diagramas/diagrama-entidades.png)
 
-Veja [modelagem](docs/banco-de-dados/modelagem.md) e [classes UML](docs/uml/README.md).
+## Contratos e operação
 
-## Contratos, regras e segurança
-
-- [Requisitos e casos de uso](docs/requisitos/requisitos-e-historias.md).
-- [Transições de status, papéis, SLA e IA supervisionada](docs/requisitos/regras-de-negocio.md).
-- [Contrato proposto da API](docs/api/contrato-api.md).
+- [Contrato real da API](docs/api/contrato-api.md).
+- [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md).
+- [Automação e resolução](docs/funcionalidades/resolucao-assistida.md).
+- [SLA e recálculo](docs/funcionalidades/sla.md).
+- [Implantação e checklist](docs/implantacao/guia-de-release.md).
+- [Testes](docs/testes/plano-de-testes.md).
 - [Segurança e privacidade](docs/seguranca/seguranca-e-privacidade.md).
-- [Testes previstos e disponíveis](docs/testes/plano-de-testes.md).
-- [ADRs e riscos](docs/planejamento/riscos-e-decisoes.md).
+- [Índice completo](docs/00-indice.md).
 
-## Planejamento e decisões
+## Limites
 
-O MVP seguirá entregas incrementais, com arquitetura modular e testes por etapa. A implementação futura não deve ser reportada no currículo ou no GitHub como concluída antes de estar disponível e validada.
-
-Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejamento/roadmap-e-sprints.md), [Git e commits](docs/contribuicao/git-e-commits.md) e [índice completo](docs/00-indice.md).
-
-## Contexto legível por IA
-
-- [`llms.txt`](llms.txt): entrada curta e referências prioritárias.
-- [`llms-full.txt`](llms-full.txt): cópia textual consolidada dos documentos principais.
-- [`scripts/gerar-llms-full.py`](scripts/gerar-llms-full.py): regeneração do arquivo após atualizar os documentos.
-- [`scripts/validar-documentacao.py`](scripts/validar-documentacao.py): checagem de links e existência dos artefatos.
+A stack tem configurações mais seguras no modo `APP_ENVIRONMENT=production` (segredo JWT mínimo, CORS restrito, Swagger desativado, cabeçalhos de segurança e limite de requisições de login via Nginx), mas **não substitui** HTTPS, monitoramento, backups, pentest, gestão de segredos e controle corporativo de identidade. Operações externas de TI não estão conectadas. Nenhuma imagem de arquitetura/protótipo comprova implantação.

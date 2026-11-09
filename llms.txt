@@ -1,48 +1,41 @@
-# PulseOps AI
+# PulseOps AI — Mapa de fontes
 
-> Plataforma demonstrativa de gestão de chamados corporativos. Neste estágio (Parte 1) existe protótipo offline HTML/CSS/JS; scripts SQL, Docker, dados fictícios e testes foram preparados para validação local. FastAPI, React, autenticação e IA estão planejados, não implementados. Não tratar documentos de especificação nem imagens de arquitetura como prova de implementação.
+> MVP demonstrativo em desenvolvimento: React, FastAPI, PostgreSQL, JWT, SLA, IA supervisionada (Ollama/OpenAI ou mock) e automações com aprovação humana. Não confundir código testado em CI com deploy público ou homologação empresarial.
 
-## Ponto de entrada
+## Comece aqui
 
-- [Apresentação e execução](README.md)
-- [Índice de documentação](docs/00-indice.md)
-- [Resumo técnico](DOCUMENTACAO.md)
+- [README e execução](README.md)
+- [Documentação técnica](DOCUMENTACAO.md)
+- [Índice](docs/00-indice.md)
+- [Implantação e limites de segurança](docs/implantacao/guia-de-release.md)
+- [Contrato da API implementada](docs/api/contrato-api.md)
+- [Testes e pendências](docs/testes/plano-de-testes.md)
 
-## Planejamento e requisitos
+## Funcionalidades
 
-- [Plano geral](docs/planejamento/plano-geral.md)
-- [Visão do produto](docs/planejamento/visao-do-produto.md)
-- [Roadmap e sprints](docs/planejamento/roadmap-e-sprints.md)
-- [Histórias de usuário e aceites](docs/requisitos/requisitos-e-historias.md)
-- [Regras de negócio e SLA](docs/requisitos/regras-de-negocio.md)
+- [Triagem supervisionada por IA](docs/funcionalidades/ia-supervisionada.md)
+- [Plano de resolução e automações aprovadas](docs/funcionalidades/resolucao-assistida.md)
+- [SLA](docs/funcionalidades/sla.md)
 
-## Engenharia e implantação planejada
+## Arquitetura e dados
 
 - [Arquitetura](docs/arquitetura/arquitetura.md)
-- [Modelagem de dados](docs/banco-de-dados/modelagem.md)
-- [Contrato preliminar da API](docs/api/contrato-api.md)
-- [Diagramas UML e suas fontes PlantUML](docs/uml/README.md)
+- [Regras de negócio](docs/requisitos/regras-de-negocio.md)
+- [Modelagem do banco](docs/banco-de-dados/modelagem.md)
+- [Diagramas UML](docs/uml/README.md)
 - [Segurança e privacidade](docs/seguranca/seguranca-e-privacidade.md)
-- [Plano de testes](docs/testes/plano-de-testes.md)
-- [Riscos e decisões arquiteturais](docs/planejamento/riscos-e-decisoes.md)
 
-## Funcionalidades implementadas
+## Código e infra
 
-- [Triagem supervisionada com IA](docs/funcionalidades/ia-supervisionada.md)
-- [Assistente de resolução e automações aprovadas](docs/funcionalidades/resolucao-assistida.md)
-
-## Código disponível
-
-- [Protótipo HTML](prototype/index.html)
-- [Esquema PostgreSQL](db/init/01_schema.sql)
+- [Backend](backend/app/main.py)
+- [Frontend](frontend/src/DashboardApp.tsx)
+- [Stack Docker](compose.app.yaml)
+- [Script de bootstrap](backend/scripts/create_admin.py)
+- [SQL inicial](db/init/01_schema.sql)
 - [Dados fictícios](db/init/02_seed_demo.sql)
-- [Consultas analíticas](db/queries/indicadores.sql)
-- [Testes SQL](db/tests/01_smoke_tests.sql)
-- [Docker Compose](compose.yaml)
+- [Workflows](.github/workflows/full-stack-smoke.yml)
+- [Protótipo histórico](prototype/index.html)
 
-## Optional
+## Consolidação
 
-- [Contexto textual completo](llms-full.txt)
-- [Galeria de arquitetura](docs/arquitetura/galeria-visual.md)
-- [Padrões de desenvolvimento](docs/arquitetura/padroes-de-desenvolvimento.md)
-- [Guia de Git e commits](docs/contribuicao/git-e-commits.md)
+- [Documentação expandida para LLM](llms-full.txt)

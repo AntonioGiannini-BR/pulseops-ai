@@ -1,8 +1,6 @@
 # Índice da documentação — PulseOps AI
 
-> **Versão da documentação:** 0.3.0 · **Etapa:** Parte 1.
-> **Implementado/preparado:** protótipo offline; scripts SQL, Docker e testes de banco para executar localmente; documentação e UML.
-> **Planejado:** FastAPI, autenticação, frontend React, IA generativa, deploy e testes de integração. Não apresentar recursos planejados como concluídos.
+> **Versão do MVP:** 0.3.0. Backend FastAPI, frontend React, PostgreSQL, triagem supervisionada e automações estão implementados em branches de desenvolvimento. A stack Docker privada é validada em CI; deploy público e homologação corporativa continuam pendentes.
 
 ## Por onde começar
 
@@ -23,10 +21,11 @@
 | Requisitos | [Histórias](requisitos/requisitos-e-historias.md), [Regras de negócio](requisitos/regras-de-negocio.md) |
 | Arquitetura | [Visão técnica](arquitetura/arquitetura.md), [Padrões](arquitetura/padroes-de-desenvolvimento.md), [Galeria](arquitetura/galeria-visual.md) |
 | Banco de dados | [Modelagem e DER](banco-de-dados/modelagem.md), [Esquema SQL](../db/init/01_schema.sql) |
-| API | [Contrato proposto](api/contrato-api.md) |
+| API | [Contrato implementado](api/contrato-api.md) |
 | Assistente de Service Desk | [Triagem com IA](funcionalidades/ia-supervisionada.md), [Resolução e automações aprovadas](funcionalidades/resolucao-assistida.md) |
 | Segurança | [Plano de segurança e privacidade](seguranca/seguranca-e-privacidade.md) |
 | Testes | [Estratégia e validações](testes/plano-de-testes.md) |
+| Implantação | [Guia de implantação e release](implantacao/guia-de-release.md) |
 | UML | [Índice de diagramas](uml/README.md) e fontes `.puml` em `docs/uml/diagramas/` |
 | Contribuição | [Git e commits](contribuicao/git-e-commits.md) |
 

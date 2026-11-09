@@ -16,6 +16,7 @@ DOCUMENTS = [
     "docs/uml/README.md",
     "docs/seguranca/seguranca-e-privacidade.md",
     "docs/testes/plano-de-testes.md",
+    "docs/implantacao/guia-de-release.md",
     "docs/planejamento/roadmap-e-sprints.md",
     "docs/planejamento/riscos-e-decisoes.md",
     "docs/arquitetura/galeria-visual.md",
@@ -24,7 +25,7 @@ DOCUMENTS = [
 header = """# PulseOps AI — Contexto textual completo para LLMs
 
 > Este arquivo é gerado automaticamente. Altere os documentos `.md` originais e execute `python scripts/gerar-llms-full.py`.
-> Escopo atual: aplicação React/FastAPI/PostgreSQL em desenvolvimento, com SLA e triagem supervisionada (modo demonstrativo ou provedor externo). Deploy e validação de produção ainda pendentes.
+> Escopo atual: aplicação React/FastAPI/PostgreSQL em desenvolvimento, com SLA, IA supervisionada e ações aprovadas. Stack Docker privada testada em CI; deploy público e homologação empresarial pendentes.
 > Diagramas e imagens são referenciados por caminhos relativos no documento de origem, sem reprodução binária.
 """
 chunks = [header]
