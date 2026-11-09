@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createManagedUser, getManagedUsers, getTeamSummary, updateManagedUserStatus } from '../services/api'
-import type { ManagedUser, UserCreatePayload, TeamSummary } from '../types/api'
+import { createManagedUser, getManagedUsers, getTeamSummary, getManagedUserAudit, updateManagedUserStatus } from '../services/api'
+import type { ManagedUser, UserCreatePayload, TeamSummary, UserAuditEvent } from '../types/api'
 import '../styles/operations.css'
 
 const emptyForm: UserCreatePayload = {
@@ -14,6 +14,7 @@ const emptyForm: UserCreatePayload = {
 export default function Users({ token }: { token: string }) {
   const [users, setUsers] = useState<ManagedUser[]>([])
   const [teams, setTeams] = useState<TeamSummary[]>([])
+  const [auditEvents, setAuditEvents] = useState<UserAuditEvent[]>([])
   const [form, setForm] = useState<UserCreatePayload>(emptyForm)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -28,10 +29,12 @@ export default function Users({ token }: { token: string }) {
     void Promise.all([
       getManagedUsers(token, controller.signal),
       getTeamSummary(token, controller.signal),
-    ]).then(([members, departments]) => {
+      getManagedUserAudit(token, controller.signal),
+    ]).then(([members, departments, events]) => {
       if (!controller.signal.aborted) {
         setUsers(members)
         setTeams(departments)
+        setAuditEvents(events)
       }
     }).catch((err: unknown) => {
       if (!controller.signal.aborted) {
@@ -53,6 +56,7 @@ export default function Users({ token }: { token: string }) {
       const created = await createManagedUser(token, form)
       setUsers((current) => [created, ...current].slice(0, 100))
       setForm({ ...emptyForm })
+      void getManagedUserAudit(token).then(setAuditEvents).catch(() => undefined)
       setNotice('Conta criada. Compartilhe a senha inicial somente por um canal seguro.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar a conta.')
@@ -71,6 +75,7 @@ export default function Users({ token }: { token: string }) {
     try {
       const updated = await updateManagedUserStatus(token, user.id, !user.is_active)
       setUsers((current) => current.map((item) => item.id === updated.id ? updated : item))
+      void getManagedUserAudit(token).then(setAuditEvents).catch(() => undefined)
       setNotice('Conta ' + (updated.is_active ? 'reativada' : 'desativada') + ' com sucesso.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível alterar a conta.')
@@ -181,6 +186,31 @@ export default function Users({ token }: { token: string }) {
           </div>
         )}
         <p className="operations-caption">Exibindo as 100 contas mais recentes. Administradores não podem ser alterados por esta tela; para gestão corporativa, ainda será necessário integrar convites e SSO.</p>
+      </section>
+      <section className="panel operations-panel" aria-label="Auditoria de contas">
+        <h3>Últimas alterações de contas</h3>
+        {auditEvents.length === 0 ? (
+          <p className="operations-caption">Nenhum evento de conta registrado.</p>
+        ) : (
+          <div className="table-overflow">
+            <table>
+              <thead><tr>
+                <th scope="col">Quando</th><th scope="col">Ação</th>
+                <th scope="col">Responsável</th><th scope="col">Conta</th>
+              </tr></thead>
+              <tbody>
+                {auditEvents.map((event) => (
+                  <tr key={event.id}>
+                    <td>{new Date(event.created_at).toLocaleString('pt-BR')}</td>
+                    <td>{event.action.replaceAll('_', ' ')}</td>
+                    <td>{event.actor_email ?? 'Conta indisponível'}</td>
+                    <td>{event.target_email ?? 'Conta indisponível'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )
