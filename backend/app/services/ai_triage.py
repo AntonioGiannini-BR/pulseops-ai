@@ -140,28 +140,14 @@ def _ollama_proposal(
     )
 
 
-def generate_proposal(
+def _openai_proposal(
     *,
     title: str,
     description: str,
     current_category_id: int,
     categories: list[dict],
 ) -> GeneratedProposal:
-    """Retorna uma sugestão validada; não faz alterações no banco."""
-    if settings.ai_provider == "mock":
-        return _mock_proposal(title, description, categories, current_category_id)
-
-    if settings.ai_provider == "ollama":
-        return _ollama_proposal(
-            title=title,
-            description=description,
-            current_category_id=current_category_id,
-            categories=categories,
-        )
-
-    if settings.ai_provider != "openai":
-        raise ProviderUnavailable("Provedor de IA não suportado")
-
+    """Chamada OpenAI isolada da escolha do provedor (Extract Method)."""
     if settings.openai_api_key is None:
         raise ProviderUnavailable("Configure OPENAI_API_KEY no backend para usar IA real")
 
@@ -220,3 +206,21 @@ def generate_proposal(
         raise InvalidProviderResponse("O provedor indicou uma categoria inválida")
 
     return GeneratedProposal(proposal=proposal, model_name=settings.ai_model[:100])
+
+
+def generate_proposal(
+    *,
+    title: str,
+    description: str,
+    current_category_id: int,
+    categories: list[dict],
+) -> GeneratedProposal:
+    """Entrada pública preservada: fachada sem efeitos sobre o chamado."""
+    from app.services.triage_patterns import TriageFacade, factory_for
+
+    return TriageFacade(factory_for(settings.ai_provider)).generate(
+        title=title,
+        description=description,
+        current_category_id=current_category_id,
+        categories=categories,
+    )
