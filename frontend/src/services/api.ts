@@ -1,4 +1,4 @@
-import type { TeamSummary, AIOverview } from '../types/api'
+import type { TeamSummary, AIOverview, ManagedUser, UserCreatePayload } from '../types/api'
 import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
 import type { ResolutionActionId, ResolutionAutomationCatalog, ResolutionAutomationResult, ResolutionGuideResponse, TicketStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
@@ -367,5 +367,36 @@ export function getTeamSummary(token: string, signal?: AbortSignal): Promise<Tea
 export function getAIOverview(token: string, signal?: AbortSignal): Promise<AIOverview> {
   return apiRequest<AIOverview>('/ai/overview', {
     headers: { Authorization: `Bearer ${token}` }, signal,
+  })
+}
+
+
+export function getManagedUsers(token: string, signal?: AbortSignal): Promise<ManagedUser[]> {
+  return apiRequest<ManagedUser[]>('/users/?limit=100', {
+    headers: { Authorization: 'Bearer ' + token }, signal,
+  })
+}
+
+export function createManagedUser(token: string, payload: UserCreatePayload): Promise<ManagedUser> {
+  return apiRequest<ManagedUser>('/users/', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateManagedUserStatus(token: string, userId: number, isActive: boolean): Promise<ManagedUser> {
+  return apiRequest<ManagedUser>('/users/' + userId + '/status', {
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer ' + token },
+    body: JSON.stringify({ is_active: isActive }),
+  })
+}
+
+export function changeOwnPassword(token: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/change-password', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token },
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
   })
 }
