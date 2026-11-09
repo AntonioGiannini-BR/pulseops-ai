@@ -4,6 +4,7 @@
   chamados_concluidos: number
   chamados_fora_sla: number
   horas_medias_resolucao: number | null
+  cumprimento_sla_pct: number | null
 }
 
 export interface DashboardDistribution {
