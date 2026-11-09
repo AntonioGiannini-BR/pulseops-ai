@@ -44,3 +44,31 @@ O workflow `Backend Tests` executa os testes de integração, inclusive `backend
 Para testar manualmente, inicie o backend e frontend, entre como analista/admin, abra um chamado em andamento, clique em **Gerar sugestão** e aprove/rejeite. Confira `ticket_history`, `ai_suggestions`, prioridade, categoria e SLA após atualizar a página.
 
 **Limitações atuais:** não há proteção de frequência global, painel de custos, análise de anexos, anonimização garantida nem testes end-to-end em navegador. Para produção, esses pontos e a política de retenção de dados precisam de revisão.
+
+## Verificar o modo ativo sem expor segredos
+
+O endpoint autenticado `GET /ai/status` exige perfil `admin` ou `analista` e retorna somente `provider`, `configured` e `model`. **Nunca** retorna `OPENAI_API_KEY`. A interface mostra claramente se está em demonstração, com modelo externo configurado ou sem chave. Se a chave não estiver configurada, o botão de geração fica indisponível no modo externo.
+
+`configured: true` confirma **somente** a presença da chave na configuração, não sua validade, crédito disponível nem conectividade com a API. Uma chamada real pode falhar com HTTP 503; nesses casos, nenhuma sugestão fictícia é criada automaticamente.
+
+## Ativar IA real no Windows (PowerShell)
+
+No VS Code, atualize a branch com a funcionalidade e abra **somente** `backend/.env` (não o `.env` da raiz do Docker):
+
+```powershell
+cd C:\Users\Antonio\pulseops-ai\backend
+notepad .env
+```
+
+Preserve `DATABASE_URL` e `JWT_SECRET_KEY` já configurados. Para habilitar o provedor externo, ajuste estas variáveis **no arquivo local, fora do Git**:
+
+```dotenv
+AI_PROVIDER=openai
+AI_MODEL=gpt-4o-mini
+AI_TIMEOUT_SECONDS=10
+OPENAI_API_KEY=COLOQUE_SUA_CHAVE_AQUI_APENAS_NO_ARQUIVO_LOCAL
+```
+
+Reinicie o FastAPI após salvar. Entre como analista/admin, abra um chamado fictício e confira a indicação de modelo externo antes de clicar em **Gerar sugestão**. Não envie sua chave ao chat, não use `VITE_OPENAI_API_KEY` e não compartilhe arquivos `.env`. O uso da API pode gerar custos e envia parte do título/descrição ao provedor. Verifique a política de privacidade e as permissões antes de usar dados reais.
+
+Para voltar ao modo local sem chamadas externas, use `AI_PROVIDER=mock` e reinicie o backend.

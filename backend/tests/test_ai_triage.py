@@ -3,10 +3,12 @@
 import uuid
 
 import pytest
+from pydantic import SecretStr
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.core.security import create_access_token, hash_password
+from app.core.config import settings
 from app.db.session import engine
 from app.main import app
 from app.services.ai_triage import (
@@ -247,3 +249,27 @@ def test_rollback_se_auditoria_falhar(context, monkeypatch):
     assert read_ticket(context) == before
     suggestions = client.get(url(context), headers=context["admin"]).json()
     assert suggestions[0]["review_status"] == "pendente"
+
+
+def test_status_provedor_requer_permissao_e_nao_revela_chave(context, monkeypatch):
+    assert client.get("/ai/status").status_code == 401
+    assert client.get("/ai/status", headers=context["requester"]).status_code == 403
+
+    monkeypatch.setattr(settings, "ai_provider", "mock")
+    monkeypatch.setattr(settings, "openai_api_key", None)
+    demo = client.get("/ai/status", headers=context["admin"])
+    assert demo.status_code == 200
+    assert demo.json() == {"provider": "mock", "configured": True, "model": None}
+
+    monkeypatch.setattr(settings, "ai_provider", "openai")
+    missing_key = client.get("/ai/status", headers=context["analyst"])
+    assert missing_key.status_code == 200
+    assert missing_key.json() == {
+        "provider": "openai", "configured": False, "model": settings.ai_model
+    }
+
+    monkeypatch.setattr(settings, "openai_api_key", SecretStr("segredo-somente-teste"))
+    configured = client.get("/ai/status", headers=context["admin"])
+    assert configured.status_code == 200
+    assert configured.json()["configured"] is True
+    assert "segredo-somente-teste" not in configured.text
