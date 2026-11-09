@@ -177,3 +177,21 @@ def update_user_status(
     except Exception:
         db.rollback()
         raise
+
+
+@router.get("/audit")
+def recent_user_audit(
+    db: Session = Depends(get_db),
+    _current_user: dict = Depends(admin_only),
+):
+    """Últimos eventos administrativos, sem senhas ou detalhes sensíveis."""
+    rows = db.execute(text("""
+        SELECT e.id, e.actor_id, e.target_user_id, e.action, e.created_at,
+               a.email AS actor_email, t.email AS target_email
+        FROM user_audit_events e
+        LEFT JOIN app_users a ON a.id = e.actor_id
+        LEFT JOIN app_users t ON t.id = e.target_user_id
+        ORDER BY e.id DESC
+        LIMIT 50
+    """)).mappings().all()
+    return [dict(row) for row in rows]
