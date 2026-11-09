@@ -1,0 +1,35 @@
+@startuml
+skinparam shadowing false
+title APS - Fluxo de proposta de triagem (padrões GoF)
+autonumber
+actor Analista
+participant "React UI" as UI
+control "FastAPI /ai-suggestions" as API
+database "PostgreSQL" as DB
+control TriageFacade as Facade
+participant "TriageFactory" as Factory
+participant "TriageStrategy" as Strategy
+participant "Ollama / OpenAI" as LLM
+Analista -> UI : Solicita sugestão
+UI -> API : POST /tickets/{id}/ai-suggestions
+API -> DB : Consulta chamado, categorias e pendências
+DB --> API : Dados autorizados
+API -> Facade : generate(title, description, category_id, categorias)
+Facade -> Factory : create_strategy()
+Factory --> Facade : Strategy concreta
+Facade -> Strategy : propose(...)
+Strategy -> LLM : Envia entrada minimizada e contrato JSON
+alt Provedor indisponível ou JSON inválido
+  LLM --> Strategy : erro
+  Strategy --> API : exceção segura
+  API --> UI : 502/503; nenhuma sugestão gravada
+else Resposta válida
+  LLM --> Strategy : JSON de triagem
+  Strategy --> Facade : GeneratedProposal
+  Facade -> Facade : valida categoria permitida
+  Facade --> API : proposta validada
+  API -> DB : trava chamado e grava sugestão pendente + histórico
+  DB --> API : commit
+  API --> UI : Sugestão aguardando revisão humana
+end
+@enduml
