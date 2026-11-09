@@ -1,0 +1,84 @@
+.ticket-resolution {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #dce6f4;
+  border-radius: 12px;
+  background: #f8fafd;
+  color: #263951;
+}
+.ticket-resolution-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ticket-resolution h3 { margin: 0 0 6px; font-size: 15px; color: #172544; }
+.ticket-resolution h4 { margin: 14px 0 6px; font-size: 13px; }
+.ticket-resolution h5 { margin: 0 0 5px; font-size: 13px; }
+.ticket-resolution p,
+.ticket-resolution li { font-size: 12px; line-height: 1.6; }
+.ticket-resolution-heading p { margin: 0; color: #56657c; }
+.ticket-resolution button {
+  padding: 9px 13px;
+  border: 1px solid #326df4;
+  border-radius: 8px;
+  background: #326df4;
+  color: white;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.ticket-resolution button:disabled { opacity: .55; cursor: not-allowed; }
+.ticket-resolution button:focus-visible { outline: 3px solid #a2bdff; outline-offset: 2px; }
+.ticket-resolution-guide {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #dce6f4;
+  border-radius: 9px;
+  background: white;
+}
+.ticket-resolution-guide ol { padding-left: 22px; }
+.ticket-resolution-guide li { margin-bottom: 6px; }
+.ticket-resolution-model,
+.ticket-resolution-disclaimer { color: #56657c; font-size: 12px; }
+.ticket-resolution-draft {
+  white-space: pre-wrap;
+  padding: 10px;
+  border-radius: 7px;
+  background: #eef3fb;
+}
+.ticket-resolution-subtitle { margin-top: 18px !important; }
+.ticket-resolution-actions { display: grid; gap: 12px; margin-top: 12px; }
+.ticket-resolution-action {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #dce6f4;
+  border-radius: 9px;
+  background: white;
+}
+.ticket-resolution-action > div { flex: 1 1 240px; min-width: 0; }
+.ticket-resolution-action p { margin: 0 0 8px; color: #56657c; }
+.ticket-resolution-action pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #f5f7fb;
+  padding: 10px;
+  border-radius: 7px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.ticket-resolution-action small { color: #a12d38; font-size: 11px; }
+.ticket-resolution-error { color: #a12d38; }
+.ticket-resolution-success { color: #176d42; }
+@media (max-width: 520px) {
+  .ticket-resolution-heading button,
+  .ticket-resolution-action button { width: 100%; }
+}

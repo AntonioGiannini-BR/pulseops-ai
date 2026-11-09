@@ -5,6 +5,7 @@ import TicketComments from './TicketComments'
 import TicketPriorityControl from './TicketPriorityControl'
 import TicketAssignmentControl from './TicketAssignmentControl'
 import TicketAISuggestions from './TicketAISuggestions'
+import TicketResolutionAssistant from './TicketResolutionAssistant'
 import type {
   Ticket,
   TicketPriority,
@@ -91,6 +92,7 @@ export default function TicketDetails({
   const [canAssignTickets, setCanAssignTickets] = useState(false)
   const [statusSaving, setStatusSaving] = useState(false)
   const [historyRevision, setHistoryRevision] = useState(0)
+  const [commentsRevision, setCommentsRevision] = useState(0)
   const [statusError, setStatusError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -403,6 +405,24 @@ export default function TicketDetails({
               />
             )}
 
+            {canUpdateStatus && (
+              <TicketResolutionAssistant
+                token={token}
+                ticketId={ticketId}
+                ticketStatus={ticket.status}
+                onExecuted={(result) => {
+                  if (result.ticket_status !== ticket.status) {
+                    setTicket((current) =>
+                      current ? { ...current, status: result.ticket_status } : current
+                    )
+                    onStatusChanged(ticketId, result.ticket_status)
+                  }
+                  setHistoryRevision((current) => current + 1)
+                  if (result.comment) setCommentsRevision((current) => current + 1)
+                }}
+              />
+            )}
+
             <div className="ticket-detail-description">
               <h3>Descrição do chamado</h3>
               <p>{ticket.description}</p>
@@ -415,6 +435,7 @@ export default function TicketDetails({
             />
 
             <TicketComments
+              key={`${ticketId}-${commentsRevision}`}
               token={token}
               ticketId={ticketId}
             />
