@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && addgroup --system pulseops \
     && adduser --system --ingroup pulseops pulseops
 COPY app ./app
+COPY scripts ./scripts
 USER pulseops
 
 EXPOSE 8010
