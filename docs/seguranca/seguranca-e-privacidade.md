@@ -37,6 +37,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 - `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
 - `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
 - Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- O CI inclui auditoria de dependências Python e npm, com execução semanal; foram atualizados FastAPI, Starlette, AnyIO, PyJWT, pytest e python-dotenv após alertas encontrados. Atualizações futuras exigem revisão de CI.
 - Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
 - Migrações versionadas e backups antes de alterações destrutivas.
 
