@@ -207,8 +207,8 @@ export function updateTicketStatus(
   token: string,
   ticketId: number,
   status: Ticket['status'],
-): Promise<Pick<Ticket, 'id' | 'status'>> {
-  return apiRequest<Pick<Ticket, 'id' | 'status'>>(
+): Promise<Pick<Ticket, 'id' | 'status' | 'resolved_at' | 'due_at'>> {
+  return apiRequest<Pick<Ticket, 'id' | 'status' | 'resolved_at' | 'due_at'>>(
     `/tickets/${ticketId}/status`,
     {
       method: 'PATCH',
@@ -225,8 +225,8 @@ export function updateTicketPriority(
   token: string,
   ticketId: number,
   priority: Ticket['priority'],
-): Promise<Pick<Ticket, 'id' | 'priority'>> {
-  return apiRequest<Pick<Ticket, 'id' | 'priority'>>(
+): Promise<Pick<Ticket, 'id' | 'priority' | 'due_at'>> {
+  return apiRequest<Pick<Ticket, 'id' | 'priority' | 'due_at'>>(
     `/tickets/${ticketId}`,
     {
       method: 'PATCH',
