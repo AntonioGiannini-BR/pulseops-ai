@@ -54,7 +54,8 @@ def _mock_proposal(title: str, description: str, categories: list[dict], current
         "infraestrutura": ("rede", "wi-fi", "wifi", "vpn", "servidor", "conex"),
         "sistemas": ("sistema", "erp", "aplicativo", "portal", "software"),
     }
-    category_id = current_category_id
+    active_ids = {category["id"] for category in categories}
+    category_id = current_category_id if current_category_id in active_ids else categories[0]["id"]
     for category in categories:
         words = category_keywords.get(category["name"].lower(), ())
         if any(word in content for word in words):
