@@ -56,7 +56,7 @@ def main() -> int:
             account_form.get_by_label("E-mail").fill(sample_email)
             account_form.get_by_label("Senha inicial (mínimo 12 caracteres)").fill(password)
             account_form.get_by_role("button", name="Criar conta").click()
-            account_row = page.get_by_role("row").filter(has_text=sample_email)
+            account_row = page.locator('section[aria-label="Contas cadastradas"]').get_by_role("row").filter(has_text=sample_email)
             expect(account_row).to_be_visible()
             page.once("dialog", lambda dialog: dialog.accept())
             account_row.get_by_role("button", name="Desativar").click()
