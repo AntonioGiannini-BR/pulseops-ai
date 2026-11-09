@@ -107,3 +107,9 @@ export interface TicketAIReviewResult {
   suggestion: TicketAISuggestion
   ticket: Pick<Ticket, 'id' | 'priority' | 'category_id' | 'due_at'>
 }
+
+export interface AIProviderStatus {
+  provider: 'mock' | 'openai' | 'ollama'
+  configured: boolean
+  model: string | null
+}

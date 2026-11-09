@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import {
   generateTicketAISuggestion,
+  getAIProviderStatus,
   getCategories,
   getTicketAISuggestions,
   reviewTicketAISuggestion,
 } from '../services/api'
 import type {
   Category,
+  AIProviderStatus,
   TicketAISuggestion,
   TicketAIReviewResult,
   TicketPriority,
@@ -44,6 +46,7 @@ export default function TicketAISuggestions({
 }: Props) {
   const [suggestions, setSuggestions] = useState<TicketAISuggestion[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [providerStatus, setProviderStatus] = useState<AIProviderStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [reviewingId, setReviewingId] = useState<number | null>(null)
@@ -56,14 +59,17 @@ export default function TicketAISuggestions({
     setError(null)
     setNotice(null)
     setSuggestions([])
+    setProviderStatus(null)
 
     void Promise.all([
       getTicketAISuggestions(token, ticketId, controller.signal),
       getCategories(token, controller.signal),
-    ]).then(([items, activeCategories]) => {
+      getAIProviderStatus(token, controller.signal),
+    ]).then(([items, activeCategories, status]) => {
       if (!controller.signal.aborted) {
         setSuggestions(items)
         setCategories(activeCategories)
+        setProviderStatus(status)
       }
     }).catch((err: unknown) => {
       if (!controller.signal.aborted) {
@@ -79,6 +85,7 @@ export default function TicketAISuggestions({
   const pending = suggestions.some((item) => item.review_status === 'pendente')
   const completed = ticketStatus === 'resolvido' || ticketStatus === 'fechado'
   const busy = generating || reviewingId !== null
+  const providerUnconfigured = providerStatus?.provider === 'openai' && !providerStatus.configured
 
   function categoryLabel(id: number | null) {
     if (id === null) return 'Não sugerida'
@@ -86,7 +93,7 @@ export default function TicketAISuggestions({
   }
 
   async function handleGenerate() {
-    if (loading || pending || completed || busy) return
+    if (loading || pending || completed || busy || providerUnconfigured) return
     setGenerating(true)
     setError(null)
     setNotice(null)
@@ -134,13 +141,24 @@ export default function TicketAISuggestions({
         </div>
         <button
           type="button"
-          disabled={loading || pending || completed || busy}
+          disabled={loading || pending || completed || busy || providerUnconfigured}
           onClick={() => void handleGenerate()}
         >
           {generating ? 'Analisando...' : 'Gerar sugestão'}
         </button>
       </div>
 
+      {providerStatus && (
+        <p className="ticket-ai-hint" role="status">
+          {providerStatus.provider === 'mock'
+            ? 'Modo demonstração: regras locais, sem modelo de IA.'
+            : providerStatus.provider === 'ollama'
+              ? `IA local selecionada (${providerStatus.model}). Mantenha o Ollama aberto; a primeira análise pode demorar.`
+              : providerStatus.configured
+                ? `Modelo externo configurado (${providerStatus.model}). Ao gerar, parte do chamado será enviada ao provedor.`
+                : 'IA externa sem chave configurada no backend. Configure OPENAI_API_KEY para gerar sugestões.'}
+        </p>
+      )}
       {completed && <p className="ticket-ai-hint">Chamados concluídos não recebem novas sugestões.</p>}
       {pending && <p className="ticket-ai-hint">Revise a sugestão pendente para gerar outra.</p>}
       {loading && <p role="status">Carregando sugestões...</p>}
@@ -177,7 +195,7 @@ export default function TicketAISuggestions({
           </dl>
           {suggestion.rationale && <p className="ticket-ai-rationale">{suggestion.rationale}</p>}
           <p className="ticket-ai-origin">
-            {suggestion.model_name === 'demo-regras-locais'
+            {suggestion.model_name?.startsWith('demo-')
               ? 'Modo demonstração — regras locais, sem modelo de IA'
               : `Modelo: ${suggestion.model_name ?? 'não informado'}`}
           </p>

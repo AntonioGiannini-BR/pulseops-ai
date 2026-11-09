@@ -1,4 +1,4 @@
-import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus } from '../types/tickets'
+import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
 import type { TicketCreate } from '../types/tickets'
 import type { Ticket, TicketHistoryEvent, TicketComment, TicketCommentCreate } from '../types/tickets'
@@ -308,4 +308,14 @@ export function reviewTicketAISuggestion(
       body: JSON.stringify({ decision }),
     },
   )
+}
+
+export function getAIProviderStatus(
+  token: string,
+  signal?: AbortSignal,
+): Promise<AIProviderStatus> {
+  return apiRequest<AIProviderStatus>('/ai/status', {
+    headers: { Authorization: `Bearer ${token}` },
+    signal,
+  })
 }
