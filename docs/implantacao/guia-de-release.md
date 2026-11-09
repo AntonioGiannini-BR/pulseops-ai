@@ -66,6 +66,14 @@ Para usar Ollama no próprio Docker:
    ```
 4. Confira o dashboard e teste um chamado fictício. Não exponha a porta 11434 à internet.
 
+Se o Ollama já está instalado diretamente no Windows, valide o serviço e a resposta JSON com o script local (na raiz do projeto):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O teste usa apenas dados fictícios e não substitui a validação da conexão da API FastAPI com o modelo.
+
 Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apontando para o Ollama local em `http://127.0.0.1:11434`. API OpenAI é opcional e pode gerar cobrança; a chave fica somente no backend.
 
 ## 5. Verificações antes de release
@@ -74,7 +82,7 @@ Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apo
 - Em `http://127.0.0.1:8080`, teste login, listagem e criação de tickets, filtros/CSV, Equipes, Central de IA e resolução supervisionada.
 - Confira `/api/health/db`, registros em `ticket_history` e falhas controladas ao desligar o provedor IA.
 - Confirme que a aprovação de automação aparece **antes** da execução e que o comentário público não contém senhas nem dados sensíveis.
-- Faça backup de teste e **restaure** em uma base descartável.
+- Faça backup de teste e **restaure** em uma base descartável. O CI já testa dump e restore na stack isolada; ainda é necessário validar o procedimento no ambiente de instalação real.
 
 ### Backup do PostgreSQL
 
