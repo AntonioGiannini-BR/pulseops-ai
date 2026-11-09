@@ -1,0 +1,75 @@
+@startuml
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+title APS - PulseOps AI: classes de projeto da triagem (Factory Method + Strategy + Facade)
+package "API e domínio" {
+  class "Rota de triagem" as API <<FastAPI>> {
+    +create_ai_suggestion(ticket_id, db, user)
+    +review_ai_suggestion(ticket_id, suggestion_id, decision)
+  }
+  class "Chamado" as Ticket <<tabela tickets>> {
+    +id: bigint
+    +title: string
+    +description: text
+    +priority: enum
+    +category_id: bigint
+  }
+  class "SugestaoIA" as Suggestion <<tabela ai_suggestions>> {
+    +id: bigint
+    +suggested_priority: enum
+    +suggested_category_id: bigint
+    +review_status: enum
+  }
+}
+package "Serviço de triagem" {
+  interface TriageStrategy {
+    +propose(title, description, category_id, categories): GeneratedProposal
+  }
+  class MockTriageStrategy
+  class OllamaTriageStrategy
+  class OpenAITriageStrategy
+  abstract class TriageFactory {
+    +create_strategy(): TriageStrategy
+  }
+  class MockTriageFactory
+  class OllamaTriageFactory
+  class OpenAITriageFactory
+  class TriageFacade {
+    -factory: TriageFactory
+    +generate(title, description, category_id, categories): GeneratedProposal
+  }
+  class GeneratedProposal {
+    +proposal: TriageProposal
+    +model_name: string
+  }
+  class TriageProposal {
+    +suggested_priority: string
+    +suggested_category_id: int
+    +summary: string
+    +rationale: string
+  }
+}
+TriageStrategy <|.. MockTriageStrategy
+TriageStrategy <|.. OllamaTriageStrategy
+TriageStrategy <|.. OpenAITriageStrategy
+TriageFactory <|-- MockTriageFactory
+TriageFactory <|-- OllamaTriageFactory
+TriageFactory <|-- OpenAITriageFactory
+MockTriageFactory ..> MockTriageStrategy : cria
+OllamaTriageFactory ..> OllamaTriageStrategy : cria
+OpenAITriageFactory ..> OpenAITriageStrategy : cria
+TriageFacade o--> TriageFactory
+TriageFactory ..> TriageStrategy : produz
+TriageStrategy ..> GeneratedProposal : retorna
+GeneratedProposal *--> TriageProposal
+API ..> TriageFacade : solicita triagem
+API ..> Ticket : consulta
+API ..> Suggestion : persiste e revisa
+Ticket "1" -- "0..*" Suggestion : possui
+note bottom of Ticket
+  Chamado e SugestaoIA sao modelos conceituais baseados nas tabelas SQL,
+  nao classes Python ORM implementadas.
+end note
+@enduml

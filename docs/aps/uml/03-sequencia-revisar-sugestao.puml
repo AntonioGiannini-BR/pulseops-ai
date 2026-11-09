@@ -1,0 +1,29 @@
+@startuml
+skinparam shadowing false
+title APS - Aprovação humana e transação auditável
+autonumber
+actor Analista
+participant "React UI" as UI
+control "FastAPI /review" as API
+control "Autorização JWT" as Auth
+database "PostgreSQL" as DB
+Analista -> UI : Aprova ou rejeita proposta
+UI -> API : POST /tickets/{id}/ai-suggestions/{id}/review
+API -> Auth : valida token e papel
+Auth --> API : admin/analista autorizado
+API -> DB : BEGIN; SELECT ticket FOR UPDATE
+DB --> API : ticket e sugestão pendente
+alt Decisão rejeitada
+  API -> DB : registra rejeição e auditoria
+else Decisão aprovada
+  API -> DB : atualiza categoria, prioridade e SLA
+  API -> DB : marca aprovada e registra histórico
+end
+API -> DB : COMMIT
+DB --> API : transação confirmada
+API --> UI : decisão registrada, atualização exibida
+note over API,DB
+  Nenhum LLM altera o chamado sem ação humana.
+  Falhas de auditoria provocam rollback.
+end note
+@enduml
