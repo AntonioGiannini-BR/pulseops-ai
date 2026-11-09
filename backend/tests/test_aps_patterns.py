@@ -48,7 +48,7 @@ def test_facade_rejeita_categoria_inventada_pelo_provedor(monkeypatch):
 def test_facade_integra_estrategia_mock_sem_alterar_dados():
     original = [dict(category) for category in CATEGORIES]
     generated = TriageFacade(MockTriageFactory()).generate(
-        title="Impressora parou", description="Impressora não funciona",
+        title="Impressora parou", description="O setor inteiro está parado",
         current_category_id=1, categories=CATEGORIES,
     )
     assert generated.proposal.suggested_category_id == 2
