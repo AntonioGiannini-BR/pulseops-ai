@@ -1,4 +1,4 @@
-import type { TeamSummary, AIOverview, ManagedUser, UserCreatePayload } from '../types/api'
+import type { TeamSummary, AIOverview, ManagedUser, UserCreatePayload, UserAuditEvent } from '../types/api'
 import type { Analyst, TicketAISuggestion, TicketAIReviewResult, AIReviewStatus, AIProviderStatus } from '../types/tickets'
 import type { ResolutionActionId, ResolutionAutomationCatalog, ResolutionAutomationResult, ResolutionGuideResponse, TicketStatus } from '../types/tickets'
 import type { Category, AuthenticatedUser } from '../types/tickets'
@@ -398,5 +398,12 @@ export function changeOwnPassword(token: string, currentPassword: string, newPas
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token },
     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  })
+}
+
+
+export function getManagedUserAudit(token: string, signal?: AbortSignal): Promise<UserAuditEvent[]> {
+  return apiRequest<UserAuditEvent[]>('/users/audit', {
+    headers: { Authorization: 'Bearer ' + token }, signal,
   })
 }
