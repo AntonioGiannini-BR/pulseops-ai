@@ -26,18 +26,22 @@ def list_tickets(
     result = db.execute(
         text("""
             SELECT
-                id,
-                title,
-                description,
-                priority,
-                status,
-                requester_id,
-                assignee_id,
-                category_id,
-                opened_at
-            FROM tickets
-            WHERE (:is_staff OR requester_id = :user_id)
-            ORDER BY id
+                t.id,
+                t.title,
+                t.description,
+                t.priority,
+                t.status,
+                t.requester_id,
+                t.assignee_id,
+                t.category_id,
+                t.opened_at,
+                t.due_at,
+                t.resolved_at,
+                sla.sla_status
+            FROM tickets AS t
+            JOIN v_ticket_sla AS sla ON sla.id = t.id
+            WHERE (:is_staff OR t.requester_id = :user_id)
+            ORDER BY t.id
         """),
         {
             "is_staff": current_user["role"] in ("admin", "analista"),
@@ -56,18 +60,22 @@ def get_ticket(
     result = db.execute(
         text("""
             SELECT
-                id,
-                title,
-                description,
-                priority,
-                status,
-                requester_id,
-                assignee_id,
-                category_id,
-                opened_at
-            FROM tickets
-            WHERE id = :ticket_id
-              AND (:is_staff OR requester_id = :user_id)
+                t.id,
+                t.title,
+                t.description,
+                t.priority,
+                t.status,
+                t.requester_id,
+                t.assignee_id,
+                t.category_id,
+                t.opened_at,
+                t.due_at,
+                t.resolved_at,
+                sla.sla_status
+            FROM tickets AS t
+            JOIN v_ticket_sla AS sla ON sla.id = t.id
+            WHERE t.id = :ticket_id
+              AND (:is_staff OR t.requester_id = :user_id)
         """),
         {
             "ticket_id": ticket_id,
@@ -129,50 +137,19 @@ def create_ticket(
             text("""
 
                 INSERT INTO tickets (
-
-                    title,
-
-                    description,
-
-                    requester_id,
-
-                    category_id,
-
-                    priority
-
+                    title, description, requester_id, category_id,
+                    priority, opened_at, due_at
                 )
-
-                VALUES (
-
-                    :title,
-
-                    :description,
-
-                    :requester_id,
-
-                    :category_id,
-
-                    :priority
-
-                )
-
+                SELECT
+                    :title, :description, :requester_id, :category_id,
+                    :priority, NOW(),
+                    NOW() + p.resolution_minutes * INTERVAL '1 minute'
+                FROM sla_policies AS p
+                WHERE p.priority = :priority
                 RETURNING
-
-                    id,
-
-                    title,
-
-                    description,
-
-                    requester_id,
-
-                    category_id,
-
-                    priority,
-
-                    status,
-
-                    opened_at
+                    id, title, description, requester_id, category_id,
+                    priority, status, assignee_id, opened_at, due_at,
+                    resolved_at
 
             """),
 
@@ -192,7 +169,15 @@ def create_ticket(
 
         )
 
-        new_ticket = dict(result.mappings().one())
+        created_row = result.mappings().first()
+        if created_row is None:
+            db.rollback()
+            raise HTTPException(
+                status_code=422,
+                detail="Política de SLA não configurada para esta prioridade",
+            )
+
+        new_ticket = dict(created_row)
 
         record_ticket_history(
             db,
@@ -266,21 +251,27 @@ def update_ticket(
 
     result = db.execute(
         text("""
-            UPDATE tickets
+            UPDATE tickets AS t
             SET
                 priority = :priority,
+                due_at = t.opened_at + p.resolution_minutes * INTERVAL '1 minute',
                 updated_at = NOW()
-            WHERE id = :ticket_id
+            FROM sla_policies AS p
+            WHERE t.id = :ticket_id
+              AND p.priority = :priority
             RETURNING
-                id,
-                title,
-                description,
-                status,
-                priority,
-                requester_id,
-                category_id,
-                opened_at,
-                updated_at
+                t.id,
+                t.title,
+                t.description,
+                t.status,
+                t.priority,
+                t.requester_id,
+                t.assignee_id,
+                t.category_id,
+                t.opened_at,
+                t.due_at,
+                t.resolved_at,
+                t.updated_at
         """),
         {
             "ticket_id": ticket_id,
@@ -293,8 +284,8 @@ def update_ticket(
     if updated_ticket is None:
         db.rollback()
         raise HTTPException(
-            status_code=404,
-            detail="Chamado não encontrado",
+            status_code=422,
+            detail="Política de SLA não configurada para esta prioridade",
         )
 
     if previous_priority != updated_ticket["priority"]:
@@ -505,6 +496,7 @@ def update_ticket_status(
                 requester_id,
                 assignee_id,
                 opened_at,
+                due_at,
                 resolved_at,
                 closed_at,
                 updated_at
