@@ -22,7 +22,18 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Copie o resultado **somente** para seu `.env` local. Não compartilhe o segredo no chat, nem faça commit de `.env`. Evite `@`, `:`, `/` e `#` na senha usada no URL do PostgreSQL (ou faça URL-encoding dos caracteres especiais).
 
-## 3. Subir aplicação (sem apagar dados)
+## 3. Atualizar volume PostgreSQL existente (sem descartar dados)
+
+Se o volume foi criado **antes** da funcionalidade de administração de contas, aplique a migração idempotente após fazer backup e antes de subir a nova API. O comando abaixo usa o serviço PostgreSQL configurado no `compose.yaml` e não depende de credenciais digitadas na linha de comando:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d database
+Get-Content -Raw .\db\migrations\20261109_user_account_audit.sql | docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
+```
+
+O comando cria somente `user_audit_events` e seu índice, sem apagar registros. Em banco recém-inicializado, essa tabela já existe. Não reexecute `db/init/01_schema.sql` sobre um banco em uso.
+
+## 4. Subir aplicação (sem apagar dados)
 
 ```powershell
 docker compose -f compose.yaml -f compose.app.yaml config --quiet
