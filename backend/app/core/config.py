@@ -10,11 +10,13 @@ class Settings(BaseSettings):
         "postgresql+psycopg:///pulseops_ai"
     )
 
-    # Modo mock é uma heurística demonstrativa, não um modelo de IA.
-    ai_provider: Literal["mock", "openai"] = "mock"
+    # mock: regras locais; openai: API externa; ollama: modelo local.
+    ai_provider: Literal["mock", "openai", "ollama"] = "mock"
     openai_api_key: SecretStr | None = None
     ai_model: str = "gpt-4o-mini"
     ai_timeout_seconds: float = Field(default=10, ge=2, le=30)
+    ollama_model: str = Field(default="qwen2.5:3b", min_length=1, max_length=100)
+    ollama_timeout_seconds: float = Field(default=120, ge=10, le=300)
 
     jwt_secret_key: str | None = None
     jwt_algorithm: str = 'HS256'

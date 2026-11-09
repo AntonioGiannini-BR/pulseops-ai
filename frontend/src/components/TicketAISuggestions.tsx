@@ -152,9 +152,11 @@ export default function TicketAISuggestions({
         <p className="ticket-ai-hint" role="status">
           {providerStatus.provider === 'mock'
             ? 'Modo demonstração: regras locais, sem modelo de IA.'
-            : providerStatus.configured
-              ? `Modelo externo configurado (${providerStatus.model}). Ao gerar, parte do chamado será enviada ao provedor.`
-              : 'IA externa sem chave configurada no backend. Configure OPENAI_API_KEY para gerar sugestões.'}
+            : providerStatus.provider === 'ollama'
+              ? `IA local selecionada (${providerStatus.model}). Mantenha o Ollama aberto; a primeira análise pode demorar.`
+              : providerStatus.configured
+                ? `Modelo externo configurado (${providerStatus.model}). Ao gerar, parte do chamado será enviada ao provedor.`
+                : 'IA externa sem chave configurada no backend. Configure OPENAI_API_KEY para gerar sugestões.'}
         </p>
       )}
       {completed && <p className="ticket-ai-hint">Chamados concluídos não recebem novas sugestões.</p>}

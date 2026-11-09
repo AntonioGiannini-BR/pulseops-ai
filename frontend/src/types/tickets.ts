@@ -109,7 +109,7 @@ export interface TicketAIReviewResult {
 }
 
 export interface AIProviderStatus {
-  provider: 'mock' | 'openai'
+  provider: 'mock' | 'openai' | 'ollama'
   configured: boolean
   model: string | null
 }

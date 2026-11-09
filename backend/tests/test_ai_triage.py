@@ -273,3 +273,12 @@ def test_status_provedor_requer_permissao_e_nao_revela_chave(context, monkeypatc
     assert configured.status_code == 200
     assert configured.json()["configured"] is True
     assert "segredo-somente-teste" not in configured.text
+
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    monkeypatch.setattr(settings, "ollama_model", "qwen2.5:3b")
+    local = client.get("/ai/status", headers=context["analyst"])
+    assert local.status_code == 200
+    assert local.json() == {
+        "provider": "ollama", "configured": True, "model": "qwen2.5:3b"
+    }
+    assert "segredo-somente-teste" not in local.text

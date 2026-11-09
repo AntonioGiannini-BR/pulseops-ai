@@ -12,7 +12,7 @@ router = APIRouter(prefix="/ai", tags=["AI Triage"])
 
 
 class AIProviderStatus(BaseModel):
-    provider: Literal["mock", "openai"]
+    provider: Literal["mock", "openai", "ollama"]
     configured: bool
     model: str | None
 
@@ -22,12 +22,17 @@ def get_ai_provider_status(
     _current_user: dict = Depends(require_roles("admin", "analista")),
 ):
     """Indica presença de configuração, não validade da chave ou conectividade."""
-    configured = settings.ai_provider == "mock" or bool(
+    # Ollama não exige chave. O status não testa se o serviço local está online.
+    configured = settings.ai_provider != "openai" or bool(
         settings.openai_api_key
         and settings.openai_api_key.get_secret_value().strip()
     )
     return AIProviderStatus(
         provider=settings.ai_provider,
         configured=configured,
-        model=settings.ai_model if settings.ai_provider == "openai" else None,
+        model=(
+            settings.ai_model if settings.ai_provider == "openai"
+            else settings.ollama_model if settings.ai_provider == "ollama"
+            else None
+        ),
     )
