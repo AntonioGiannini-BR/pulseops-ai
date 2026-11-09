@@ -14,6 +14,10 @@ const actionLabels: Record<string, string> = {
   mudanca_status: 'Status atualizado',
   mudanca_prioridade: 'Prioridade alterada',
   atribuicao: 'Analista atribuído',
+  mudanca_categoria: 'Categoria alterada',
+  ai_sugestao_criada: 'Sugestão de triagem criada',
+  ai_sugestao_aprovada: 'Sugestão de triagem aprovada',
+  ai_sugestao_rejeitada: 'Sugestão de triagem rejeitada',
 }
 
 const valueLabels: Record<string, string> = {
