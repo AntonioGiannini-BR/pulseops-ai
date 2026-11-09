@@ -1,0 +1,63 @@
+name: APS Quality Evidence
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  aps-quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: pulseops
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: pulseops_ai
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pulseops -d pulseops_ai"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://pulseops:test_password@localhost:5432/pulseops_ai
+      JWT_SECRET_KEY: "pulseops-ci-test-key-not-for-production-2026"
+      AI_PROVIDER: mock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test and coverage tools
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pytest-cov==7.0.0
+      - name: Initialize disposable test database
+        run: |
+          PGPASSWORD=test_password psql -h localhost -U pulseops -d pulseops_ai -v ON_ERROR_STOP=1 -f db/init/01_schema.sql
+          PGPASSWORD=test_password psql -h localhost -U pulseops -d pulseops_ai -v ON_ERROR_STOP=1 -f db/init/02_seed_demo.sql
+      - name: Unit and integration tests with scoped coverage
+        working-directory: backend
+        run: |
+          python -m pytest -q \
+            --cov=app.services.ai_triage \
+            --cov=app.services.triage_patterns \
+            --cov-report=term-missing \
+            --cov-report=xml:aps-coverage.xml
+      - name: Static analysis of APS modules
+        run: |
+          python scripts/aps_metrics.py \
+            backend/app/services/triage_patterns.py \
+            backend/app/services/ai_triage.py \
+            --out aps-metrics.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aps-quality-evidence
+          path: |
+            backend/aps-coverage.xml
+            aps-metrics.json
+          if-no-files-found: warn
