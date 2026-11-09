@@ -1,7 +1,7 @@
 # PulseOps AI — Contexto textual completo para LLMs
 
 > Este arquivo é gerado automaticamente. Altere os documentos `.md` originais e execute `python scripts/gerar-llms-full.py`.
-> Escopo atual: Parte 1 (protótipo offline, scripts SQL/Docker preparados). APIs, login, React, LLM e deploy são planos futuros, não recursos implementados.
+> Escopo atual: aplicação React/FastAPI/PostgreSQL em desenvolvimento, com SLA, IA supervisionada e ações aprovadas. Stack Docker privada testada em CI; deploy público e homologação empresarial pendentes.
 > Diagramas e imagens são referenciados por caminhos relativos no documento de origem, sem reprodução binária.
 
 
@@ -9,88 +9,104 @@
 
 ## Fonte: `README.md`
 
-# PulseOps AI — Gestão Inteligente de Operações
+# PulseOps AI — Gestão Inteligente de Service Desk
 
-Projeto de portfólio para estudar engenharia de software aplicada a suporte corporativo: gestão de chamados, rastreabilidade, SLAs, métricas e, futuramente, sugestões assistidas por IA com revisão humana.
+Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **FastAPI**, **PostgreSQL** e triagem supervisionada por IA. Projeto de engenharia de software voltado a portfólio, aprendizagem e validação funcional.
 
-> **Status: Parte 1 — planejamento, documentação UML e protótipo.** O painel HTML/CSS/JavaScript funciona offline com dados fictícios. Esquema PostgreSQL, Docker e scripts de testes estão preparados, mas a execução do banco deve ser validada localmente. **FastAPI, React, login, integrações e IA ainda não estão implementados.**
+> **Estado:** MVP implementado em branches de desenvolvimento e PRs; CI verifica API, frontend, banco e stack Docker. Um deploy público/empresarial **não** está ativado nem homologado. O modo `mock` usa regras locais; para IA generativa real use Ollama ou API OpenAI configurada.
 
-![Prévia do protótipo do dashboard](docs/imagens/dashboard-preview.png)
+![Prévia do painel](docs/imagens/dashboard-preview.png)
 
-## Documentação principal
+## Funcionalidades do MVP
 
-- [Índice de toda a documentação](docs/00-indice.md) — comece aqui.
-- [Planejamento](docs/planejamento/plano-geral.md) e [roadmap](docs/planejamento/roadmap-e-sprints.md).
-- [Requisitos e histórias de usuário](docs/requisitos/requisitos-e-historias.md) e [regras de negócio](docs/requisitos/regras-de-negocio.md).
-- [Arquitetura](docs/arquitetura/arquitetura.md), [galeria visual](docs/arquitetura/galeria-visual.md) e [diagramas PlantUML](docs/uml/README.md).
-- [Modelagem do banco de dados](docs/banco-de-dados/modelagem.md) e [API planejada](docs/api/contrato-api.md).
-- [Segurança](docs/seguranca/seguranca-e-privacidade.md), [testes](docs/testes/plano-de-testes.md) e [guia de commits](docs/contribuicao/git-e-commits.md).
-- **Para IA e agentes:** [`llms.txt`](llms.txt) (mapa curto) e [`llms-full.txt`](llms-full.txt) (documentação consolidada).
+- Login por JWT; perfis `admin`, `analista` e `solicitante`; sessão mantida somente em memória no frontend.
+- **Administração de contas:** cadastro e desativação de analistas/solicitantes, auditoria por administrador e troca da própria senha. Sem cadastro público nem criação de novos administradores pela interface.
+- Criação e acompanhamento de chamados, responsável, status, prioridade, comentários públicos/internos e histórico.
+- Prazos de SLA, indicadores e distribuição dos chamados; busca/filtros e **exportação CSV dos registros visíveis**.
+- **Equipes:** contagens de usuários ativos, analistas e tickets por departamento.
+- **Central de IA:** status de provedor e indicadores de sugestões aprovadas, pendentes e rejeitadas.
+- **Triagem por IA:** prioridade/categoria/justificativa sugeridas, aplicadas apenas após revisão humana.
+- **Assistente de resolução:** hipótese, roteiro de investigação e resposta sugerida por IA.
+- **Automações aprovadas:** diagnóstico do banco da própria plataforma, comentário com orientações padronizadas e avanço seguro do fluxo. **Não altera senhas/permissões externas nem executa comandos arbitrários.**
+- Auditoria de mudanças e testes automatizados.
 
-## Arquitetura atual e proposta
+## Como rodar no Windows (desenvolvimento)
 
-**Parte 1:** protótipo independente do banco; scripts SQL e PostgreSQL via Docker Compose preparados para validação.
+Pré-requisitos: Docker Desktop com PostgreSQL, Python 3.11+, Node 22+, Git. Para IA real local: [Ollama](https://ollama.com/download/windows) e `ollama pull qwen2.5:3b`.
 
-![Estado atual da Parte 1](docs/imagens/01-arquitetura-atual.png)
+O projeto usa dois ambientes separados: `.env` na raiz para o PostgreSQL do Docker e `backend/.env` para a API. **Preserve suas configurações existentes**; nunca execute scripts de inicialização sobre um banco em uso.
 
-**Planejado:** React + TypeScript, FastAPI, PostgreSQL e modelo de IA com revisão humana.
+Em bancos **já existentes**, antes de atualizar a API, aplique uma única vez a migração não destrutiva `db/migrations/20261109_user_account_audit.sql` (veja o guia de implantação). Em bancos novos a tabela é criada pelo `db/init/01_schema.sql`.
 
-![Arquitetura-alvo planejada](docs/imagens/02-arquitetura-alvo.png)
-
-## Executar protótipo no Windows
-
-1. Extraia este projeto e abra a pasta no VS Code.
-2. Abra `prototype/index.html` no navegador. A interface é demonstrativa e não salva alterações no PostgreSQL.
-3. Para subir o banco local, com o Docker Desktop aberto, execute no PowerShell:
+No primeiro uso, configure uma senha de banco forte em `.env` (baseado em `.env.example`) e inicie apenas o PostgreSQL:
 
 ```powershell
-Copy-Item .env.example .env
-notepad .env
-# Troque POSTGRES_PASSWORD por uma senha de desenvolvimento forte antes de prosseguir
-docker compose up -d
-docker compose ps
-.\scripts\testar-banco.ps1
+docker compose up -d database
 ```
 
-Para entrar no banco:
+No arquivo `backend/.env`, defina a URL real do PostgreSQL, uma chave JWT privada e o Ollama:
+
+```dotenv
+DATABASE_URL=postgresql+psycopg://USUARIO:SENHA@127.0.0.1:5432/NOME_DO_BANCO
+JWT_SECRET_KEY=GERE_E_GUARDE_UM_SEGREDO_ALEATORIO
+AI_PROVIDER=ollama
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+```
+
+Se não tiver conta ativa, crie um administrador de forma interativa, **sem colocar a senha no terminal como argumento**:
 
 ```powershell
-docker compose exec database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+cd backend
+python -m pip install -r requirements.txt
+python -m scripts.create_admin --email admin@exemplo.local --name "Administrador"
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
-> **Atenção:** `docker compose down -v` apaga o volume do PostgreSQL. Os arquivos `db/init/*.sql` são aplicados somente na criação inicial do volume. Mudanças posteriores exigirão migrações.
-
-## Fontes disponíveis
-
-```text
-prototype/         HTML, CSS e JavaScript da demonstração
-db/init/           Esquema e dados fictícios para PostgreSQL
-db/queries/        Consultas analíticas
-db/tests/          Testes SQL preparados
-compose.yaml       Serviço local PostgreSQL
-scripts/           Verificação do banco, renderização UML e validação dos docs
-docs/              Planejamento, arquitetura, UML e imagens
-llms.txt           Navegação resumida para LLMs
-llms-full.txt      Contexto textual consolidado
-```
-
-## Qualidade e segurança
-
-- Não publique `.env`, credenciais ou dados reais de clientes.
-- Os dados do protótipo são fictícios e não constituem autenticação ou sistema pronto para produção.
-- Autenticação, autorização, proteção de API, logs de auditoria e testes end-to-end são **objetivos futuros**.
-- A renderização das fontes PlantUML oficiais depende de Java + JAR PlantUML no computador. As imagens existentes são prévias e não substituem a validação dessas fontes.
-
-## Verificar a documentação
-
-A ação [Validar documentação](.github/workflows/docs.yml) também executa essas verificações automaticamente no GitHub.
+Em outro terminal:
 
 ```powershell
-python scripts/gerar-llms-full.py
-python scripts/validar-documentacao.py
+cd frontend
+npm ci
+"VITE_API_URL=http://127.0.0.1:8010" | Set-Content .env.local
+npm run dev
 ```
 
-[Documentação técnica consolidada](DOCUMENTACAO.md) · [Guia de Git e commits](docs/contribuicao/git-e-commits.md)
+Acesse `http://localhost:5173`. A API de desenvolvimento possui Swagger em `http://127.0.0.1:8010/docs`. No Docker com `APP_ENVIRONMENT=production`, Swagger público fica desabilitado.
+
+Para verificar o Ollama **já instalado no Windows**, antes de conectar o FastAPI, execute na raiz do projeto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script verifica o modelo e uma resposta JSON com um texto fictício, sem executar ações.
+
+## Stack completa em Docker (demonstração privada)
+
+Use `compose.app.yaml` sobre `compose.yaml`: PostgreSQL + FastAPI + Nginx/React, com acesso restrito à máquina local por padrão. Requer `JWT_SECRET_KEY` privado de no mínimo 32 caracteres no `.env` da raiz.
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+```
+
+Acesse `http://127.0.0.1:8080`. A API usa o prefixo `/api` no proxy Nginx. A inicialização **não recria um volume existente**; nunca use `docker compose down -v` em dados importantes.
+
+O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo nesse contêiner. O modelo instalado no Windows **não é automaticamente compartilhado com esse contêiner**. Veja os comandos completos, criação segura de conta, teste e backup no [Guia de implantação e release](docs/implantacao/guia-de-release.md).
+
+## Qualidade e documentação
+
+- [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
+- **Auditoria de dependências:** `pip-audit` e `npm audit` executados em Pull Requests, em `develop`/`main` e semanalmente.
+- [Contrato implementado da API](docs/api/contrato-api.md)
+- [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
+- [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
+- [Arquitetura, UML e modelagem](docs/00-indice.md)
+- [Documentação técnica](DOCUMENTACAO.md), [`llms.txt`](llms.txt) e [`llms-full.txt`](llms-full.txt)
+
+### Limitações antes de uso empresarial
+
+O aplicativo ainda exige hospedagem HTTPS, secrets seguros, backup/restore testado, observabilidade, política de retenção e revisão de segurança independente. A autenticação usa JWT sem revogação central e a IA não acessa sistemas corporativos externos; o deploy em Docker **não é uma homologação de produção**. A sugestão de um LLM não é comprovação de diagnóstico ou correção.
 
 
 ---
@@ -99,55 +115,56 @@ python scripts/validar-documentacao.py
 
 # Documentação técnica — PulseOps AI
 
-> **Versão:** 0.3.0 · **Situação:** Parte 1 (protótipo offline e infraestrutura SQL/Docker preparada para execução local). **Planejados:** FastAPI, React, autenticação, IA e deploy.
+> **Versão do MVP:** 0.3.0. **Estado:** API FastAPI, interface React e PostgreSQL implementados; execução local documentada e stack Docker preparada para validação. O deploy público e a homologação empresarial continuam pendentes.
 
 ## Objetivo
 
-Construir uma plataforma de gestão de chamados corporativos com histórico, responsáveis, categorias, priorização, prazos de SLA e indicadores. Evoluir para um produto full-stack com triagem por IA generativa **apenas mediante revisão humana**. O projeto é demonstrativo e voltado a aprendizado/portfólio.
+Plataforma demonstrativa de Service Desk com autenticação, tickets, atribuição, categorias, estados, comentários, histórico, SLA, indicadores e inteligência artificial sob revisão humana.
 
-## O que realmente existe
+## Implementação atual
 
-- Dashboard HTML/CSS/JavaScript offline com dados fictícios: [`prototype/`](prototype/).
-- Scripts PostgreSQL com oito tabelas, views e dados demonstrativos: [`db/init/`](db/init/) e [`db/queries/`](db/queries/).
-- Docker Compose preparado para rodar o PostgreSQL localmente: [`compose.yaml`](compose.yaml).
-- Diagramas arquiteturais, UML editável e documentação técnica: [`docs/`](docs/00-indice.md).
-- Testes de banco **incluídos, mas sem validação real neste ambiente**: [`db/tests/`](db/tests/) e [`scripts/testar-banco.ps1`](scripts/testar-banco.ps1).
+- `backend/app/`: FastAPI, endpoints REST, autorização por JWT/perfil e transações PostgreSQL.
+- `frontend/src/`: dashboard React/TypeScript, chamados, Equipes, Central de IA, assistente de triagem e resolução.
+- `db/init/`: oito tabelas PostgreSQL, views e seed fictícia (contas inativas por padrão).
+- `compose.yaml`: PostgreSQL local com volume persistente.
+- `compose.app.yaml`: stack integrada FastAPI + React/Nginx; serviço Ollama opcional.
+- `backend/scripts/create_admin.py`: criação de conta administrativa por senha privada solicitada interativamente.
+- `backend/tests/`, `.github/workflows/`: testes de API/segurança/banco, build TS e smoke test Docker.
+- `prototype/`: referência visual estática histórica, não é a aplicação integrada.
 
-## Arquitetura de referência
+## Arquitetura lógica
 
-![Arquitetura-alvo (ainda não implementada)](docs/imagens/02-arquitetura-alvo.png)
+```text
+Navegador
+  → React (Vite / Nginx no Docker)
+  → FastAPI (JWT, RBAC, regras de negócio)
+  → PostgreSQL (tickets, histórico, políticas SLA, sugestões)
+                      ↘
+                 Ollama local ou API OpenAI (opcional)
+```
 
-O backend FastAPI atenderá uma interface React, armazenará dados no PostgreSQL e controlará a criação, transição e auditoria de chamados. Um serviço opcional de IA fará sugestões que não poderão ser aplicadas sem aprovação de um analista autorizado. Essas camadas são **planejadas**. Consulte a [arquitetura detalhada](docs/arquitetura/arquitetura.md).
+O texto de um chamado é entrada não confiável. A IA apenas sugere classificação e passos de resolução. Ações executáveis são uma lista fechada do servidor: diagnóstico da própria plataforma, publicação de template de orientação e avanço controlado de status. Cada ação exige aprovação humana.
 
 ## Modelo de domínio
 
-O esquema contém: `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`. O SQL é a fonte de verdade do modelo físico.
+O banco contém `departments`, `app_users`, `categories`, `sla_policies`, `tickets`, `ticket_comments`, `ticket_history` e `ai_suggestions`. O SQL do diretório `db/init` descreve o modelo físico inicial. Migrações posteriores ficam em `db/migrations`.
 
 ![Entidades e relacionamentos](docs/banco-de-dados/diagramas/diagrama-entidades.png)
 
-Veja [modelagem](docs/banco-de-dados/modelagem.md) e [classes UML](docs/uml/README.md).
+## Contratos e operação
 
-## Contratos, regras e segurança
-
-- [Requisitos e casos de uso](docs/requisitos/requisitos-e-historias.md).
-- [Transições de status, papéis, SLA e IA supervisionada](docs/requisitos/regras-de-negocio.md).
-- [Contrato proposto da API](docs/api/contrato-api.md).
+- [Contrato real da API](docs/api/contrato-api.md).
+- [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md).
+- [Automação e resolução](docs/funcionalidades/resolucao-assistida.md).
+- [SLA e recálculo](docs/funcionalidades/sla.md).
+- [Implantação e checklist](docs/implantacao/guia-de-release.md).
+- [Testes](docs/testes/plano-de-testes.md).
 - [Segurança e privacidade](docs/seguranca/seguranca-e-privacidade.md).
-- [Testes previstos e disponíveis](docs/testes/plano-de-testes.md).
-- [ADRs e riscos](docs/planejamento/riscos-e-decisoes.md).
+- [Índice completo](docs/00-indice.md).
 
-## Planejamento e decisões
+## Limites
 
-O MVP seguirá entregas incrementais, com arquitetura modular e testes por etapa. A implementação futura não deve ser reportada no currículo ou no GitHub como concluída antes de estar disponível e validada.
-
-Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejamento/roadmap-e-sprints.md), [Git e commits](docs/contribuicao/git-e-commits.md) e [índice completo](docs/00-indice.md).
-
-## Contexto legível por IA
-
-- [`llms.txt`](llms.txt): entrada curta e referências prioritárias.
-- [`llms-full.txt`](llms-full.txt): cópia textual consolidada dos documentos principais.
-- [`scripts/gerar-llms-full.py`](scripts/gerar-llms-full.py): regeneração do arquivo após atualizar os documentos.
-- [`scripts/validar-documentacao.py`](scripts/validar-documentacao.py): checagem de links e existência dos artefatos.
+A stack tem configurações mais seguras no modo `APP_ENVIRONMENT=production` (segredo JWT mínimo, CORS restrito, Swagger desativado, cabeçalhos de segurança e limite de requisições de login via Nginx), mas **não substitui** HTTPS, monitoramento, backups, pentest, gestão de segredos e controle corporativo de identidade. Operações externas de TI não estão conectadas. Nenhuma imagem de arquitetura/protótipo comprova implantação.
 
 
 ---
@@ -156,9 +173,7 @@ Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejament
 
 # Índice da documentação — PulseOps AI
 
-> **Versão da documentação:** 0.3.0 · **Etapa:** Parte 1.
-> **Implementado/preparado:** protótipo offline; scripts SQL, Docker e testes de banco para executar localmente; documentação e UML.
-> **Planejado:** FastAPI, autenticação, frontend React, IA generativa, deploy e testes de integração. Não apresentar recursos planejados como concluídos.
+> **Versão do MVP:** 0.3.0. Backend FastAPI, frontend React, PostgreSQL, triagem supervisionada e automações estão implementados em branches de desenvolvimento. A stack Docker privada é validada em CI; deploy público e homologação corporativa continuam pendentes.
 
 ## Por onde começar
 
@@ -179,9 +194,11 @@ Veja [plano geral](docs/planejamento/plano-geral.md), [roadmap](docs/planejament
 | Requisitos | [Histórias](requisitos/requisitos-e-historias.md), [Regras de negócio](requisitos/regras-de-negocio.md) |
 | Arquitetura | [Visão técnica](arquitetura/arquitetura.md), [Padrões](arquitetura/padroes-de-desenvolvimento.md), [Galeria](arquitetura/galeria-visual.md) |
 | Banco de dados | [Modelagem e DER](banco-de-dados/modelagem.md), [Esquema SQL](../db/init/01_schema.sql) |
-| API | [Contrato proposto](api/contrato-api.md) |
+| API | [Contrato implementado](api/contrato-api.md) |
+| Assistente de Service Desk | [Triagem com IA](funcionalidades/ia-supervisionada.md), [Resolução e automações aprovadas](funcionalidades/resolucao-assistida.md) |
 | Segurança | [Plano de segurança e privacidade](seguranca/seguranca-e-privacidade.md) |
 | Testes | [Estratégia e validações](testes/plano-de-testes.md) |
+| Implantação | [Guia de implantação e release](implantacao/guia-de-release.md) |
 | UML | [Índice de diagramas](uml/README.md) e fontes `.puml` em `docs/uml/diagramas/` |
 | Contribuição | [Git e commits](contribuicao/git-e-commits.md) |
 
@@ -210,6 +227,8 @@ O arquivo [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) valida l
 ## Fonte: `docs/planejamento/plano-geral.md`
 
 # Plano do projeto — PulseOps AI
+
+> **Nota histórica:** este documento registra o plano original da Parte 1. A implementação atual e o estado de validação estão descritos no [README](../../README.md) e no [guia de release](../implantacao/guia-de-release.md); itens abaixo marcados como "planejados" não refletem necessariamente o código atual.
 
 **Documento:** termo de abertura e plano executivo de desenvolvimento.  
 **Versão:** 0.2 (Parte 1) • **Responsável:** mantenedor do repositório.  
@@ -859,53 +878,70 @@ O [diagrama de classes em PlantUML](../uml/diagramas/02-classes-dominio.puml), c
 
 ## Fonte: `docs/api/contrato-api.md`
 
-# Contrato preliminar da API — Semana 2
+# API FastAPI — contrato implementado
 
-> **Estado da documentação:** Contrato previsto; nenhum endpoint FastAPI está implementado nesta versão.
+> **Estado:** endpoints implementados no código. Em desenvolvimento: base `http://127.0.0.1:8010`. Na stack Nginx: prefixo público `/api`, encaminhado para a mesma API sem prefixo. A documentação interativa `/docs` fica disponível **somente em desenvolvimento**.
 
-![Arquitetura-alvo da API no contexto do sistema](../imagens/02-arquitetura-alvo.png)
+## Autenticação e operação
 
-*API planejada, ainda não implementada nesta entrega.*
-
-Base local sugerida: `http://localhost:8000/api/v1`.
-
-| Método | Rota | Quem usa | Finalidade |
+| Método | Caminho | Perfil | Resultado |
 |---|---|---|---|
-| POST | `/auth/login` | Público | Autenticação; token de sessão |
-| GET | `/auth/me` | Autenticado | Dados do usuário atual |
-| GET | `/tickets` | Autenticado | Listar com filtros, paginação e restrição de acesso |
-| POST | `/tickets` | Solicitante/analista/admin | Criar chamado; registrar autor do token |
-| GET | `/tickets/{id}` | Autorizado | Detalhar chamado |
-| PATCH | `/tickets/{id}` | Analista/admin | Alterar responsável, prioridade, status; registrar histórico |
-| POST | `/tickets/{id}/comments` | Autorizado | Adicionar comentário |
-| GET | `/categories` | Autenticado | Listar categorias |
-| GET | `/dashboard/kpis` | Analista/admin | Estatísticas agregadas |
-| GET | `/dashboard/by-category` | Analista/admin | Chamados por categoria |
-| POST | `/tickets/{id}/ai-suggestions` | Analista/admin | Pedir sugestão de triagem (Semana 5) |
-| POST | `/ai-suggestions/{id}/review` | Analista/admin | Aprovar ou rejeitar sugestão (Semana 5) |
+| POST | `/auth/login` | Público | `access_token` JWT |
+| GET | `/auth/me` | Autenticado | ID, e-mail e perfil |
+| POST | `/auth/change-password` | Autenticado | Troca própria senha após confirmar a atual; resposta sem segredo |
+| GET | `/health`, `/health/db` | Público | Saúde básica e conexão da base |
+| GET | `/dashboard/summary`, `/dashboard/distribution` | Admin/analista | KPI e distribuição |
+| GET | `/teams/summary` | Admin/analista | Contagens por departamento |
+| GET | `/ai/status` | Admin/analista | Provedor/modelo configurado, sem revelar segredo |
+| GET | `/ai/overview` | Admin/analista | Contagens agregadas de sugestões |
+| GET | `/categories/` | Autenticado | Categorias ativas |
+| GET | `/analysts/` | Admin | Analistas ativos |
+| GET | `/users/?limit=100&offset=0` | Admin | Lista contas sem hashes, com paginação limitada a 100 |
+| POST | `/users/` | Admin | Cria analista ou solicitante ativo, senha em Argon2id |
+| PATCH | `/users/{id}/status` | Admin | Ativa/desativa conta não administrativa |
+| GET | `/users/audit` | Admin | Últimos 50 eventos auditáveis de contas, sem senhas |
 
-## Exemplo de criação de chamado (futuro)
+## Chamados
+
+| Método | Caminho | Perfil | Resultado |
+|---|---|---|---|
+| GET | `/tickets/`, `/tickets/{id}` | Autenticado e autorizado | Lista/consulta; solicitante só vê seus tickets |
+| POST | `/tickets/` | Autenticado | Cria ticket com política SLA |
+| PATCH | `/tickets/{id}` | Admin/analista | Altera prioridade e SLA |
+| PATCH | `/tickets/{id}/status` | Admin/analista | Próxima transição permitida |
+| PATCH | `/tickets/{id}/assign` | Admin | Atribui analista ativo |
+| GET | `/tickets/{id}/history` | Autorizado | Histórico de eventos |
+| GET, POST | `/tickets/{id}/comments` | Autorizado | Comentários com separação público/interno |
+
+## IA e resolução assistida
+
+| Método | Caminho | Perfil | Resultado |
+|---|---|---|---|
+| GET, POST | `/tickets/{id}/ai-suggestions` | Admin/analista | Consultar/criar sugestão pendente |
+| POST | `/tickets/{id}/ai-suggestions/{suggestion_id}/review` | Admin/analista | Aprovar/rejeitar com auditoria |
+| POST | `/tickets/{id}/resolution-guide` | Admin/analista | Guia textual para revisão |
+| GET | `/tickets/{id}/resolution-automations` | Admin/analista | Ações disponíveis e prévias |
+| POST | `/tickets/{id}/resolution-automations/{action_id}/execute` | Admin/analista | Executa ação definida no servidor após confirmação |
+
+Criação de contas exige `full_name`, `email`, `password` (mínimo de 12 caracteres), `role` (`analista` ou `solicitante`) e `department_id` opcional. A API impede criação e desativação de administradores por essa rota; `user_audit_events` requer migração em bancos preexistentes. A troca de senha usa `{ "current_password": "...", "new_password": "..." }` e não revoga instantaneamente os JWTs existentes (prazo máximo configurável da sessão).
+
+O corpo obrigatório para execução controlada é `{"approved":true,"expected_status":"aberto"}` (o estado deve coincidir com a prévia). Ações não podem ser inventadas pelo LLM. Chamado concluído não recebe automações. O backend não acessa sistemas externos.
+
+## Exemplos
+
+Autenticação:
+
 ```json
-{
-  "title": "Sistema de vendas fora do ar",
-  "description": "Equipe não consegue registrar os pedidos.",
-  "category_id": 2,
-  "priority": "alta"
-}
+{"email":"admin@exemplo.local","password":"DIGITE_SUA_SENHA_PRIVADA"}
 ```
 
-## Exemplo da resposta planejada (futuro)
+Criação:
+
 ```json
-{
-  "id": 9,
-  "title": "Sistema de vendas fora do ar",
-  "status": "aberto",
-  "priority": "alta",
-  "due_at": "2026-10-20T20:00:00-03:00"
-}
+{"title":"Falha no sistema de vendas","description":"Operação indisponível na filial","requester_id":1,"category_id":2,"priority":"alta"}
 ```
 
-**Atenção:** estas rotas são uma especificação, **não estão implementadas** nesta Parte 1. O backend FastAPI será iniciado na Parte 2.
+Erros seguem HTTP 401 (não autenticado), 403 (sem perfil), 404 (não encontrado), 409 (conflito), 422 (validação), 502 (resposta inválida da IA) ou 503 (indisponibilidade), conforme a rota. A listagem de contas possui `limit`/`offset`; a listagem geral de tickets continua sem paginação server-side. Não existe redefinição de senha por e-mail nem convite externo: essas integrações exigem um provedor validado antes de uso empresarial.
 
 
 ---
@@ -1000,7 +1036,7 @@ O script produzirá SVG e PNG em `docs/uml/imagens/` a partir dos arquivos Plant
 
 # Segurança e privacidade — projeto de engenharia
 
-**Status:** controles propostos para as Partes 2–6; **não** declarar o projeto seguro para produção com base apenas neste documento.
+**Status:** controles de aplicação parcialmente implementados e testados no MVP; **não** declarar o projeto seguro para produção com base apenas neste documento.
 
 ## 1. Dados e fronteiras de confiança
 
@@ -1026,8 +1062,8 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 
 ## 3. Autenticação, sessões e controle de acesso
 
-- **Planejado:** hash de senhas usando algoritmo de derivação adequado (Argon2id); nunca criptografia reversível nem hash simples.
-- Tokens JWT só serão utilizados após definir expiração, rotação/revogação e forma de armazenamento. Para aplicação web, avaliar cookie `HttpOnly`, `Secure` e `SameSite` e a proteção CSRF correspondente; não tratar JWT como proteção suficiente por si só.
+- **Implementado:** hashes Argon2id para contas; criação por administrador (somente analista/solicitante), desativação sem exclusão e troca da própria senha com auditoria. O fluxo de criação ainda depende de uma senha inicial transmitida por canal seguro.
+- **Implementado parcialmente:** JWT curto em memória e validação do status ativo da conta em cada requisição. **Pendente:** revogação imediata por sessão, rotação central, gestão corporativa de identidade. Para aplicação web empresarial, avaliar cookie `HttpOnly`, `Secure` e `SameSite`, e proteção CSRF correspondente.
 - Rate limit de login, erros genéricos e registro de tentativas suspeitas sem incluir credenciais.
 - Aplicar autorização por perfil **e** por vínculo ao objeto; UI não substitui verificação de API.
 - Privilégios mínimos para a conta do banco e para a chave da API de IA.
@@ -1037,6 +1073,7 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 - `.env` pertence ao ambiente local e é excluído do Git. `.env.example` só tem nomes de variáveis e placeholders.
 - `compose.yaml` da Parte 1 publica PostgreSQL em `127.0.0.1` apenas; ainda não é configuração de produção.
 - Não colocar credenciais em commits, imagens, exemplos de documentação ou capturas.
+- O CI inclui auditoria de dependências Python e npm, com execução semanal; foram atualizados FastAPI, Starlette, AnyIO, PyJWT, pytest e python-dotenv após alertas encontrados. Atualizações futuras exigem revisão de CI.
 - Antes de deploy: HTTPS, CORS restritivo, backups testados, política de atualização de dependências, limites de request, health check e monitoramento.
 - Migrações versionadas e backups antes de alterações destrutivas.
 
@@ -1067,79 +1104,212 @@ O sistema lidará com nomes, e-mails, descrições de chamados, histórico de a�
 
 ## Fonte: `docs/testes/plano-de-testes.md`
 
-# Estratégia e plano de testes — PulseOps AI
+# Estratégia de testes e validação — PulseOps AI
 
-**Separar fatos de metas:** existem scripts SQL de smoke test, mas não há registro de execução do PostgreSQL neste ambiente. Ainda não há FastAPI ou suíte Pytest para executar. O protótipo web é uma demonstração local com dados falsos.
+## Automatizado no GitHub Actions
 
-## 1. Níveis de teste planejados
+| Workflow | Verificação | Escopo |
+|---|---|---|
+| [Backend Tests](../../.github/workflows/backend-tests.yml) | Pytest e PostgreSQL isolado; smoke SQL | CRUD, auth/RBAC, SLA, histórico, IA, automações, bootstrap, métricas, administração e auditoria de contas |
+| [Frontend Build](../../.github/workflows/frontend-build.yml) | `npm ci` e `npm run build` | TypeScript e build React/Vite |
+| [Full Stack Smoke](../../.github/workflows/full-stack-smoke.yml) | Docker Compose, backup/restauração em banco descartável e Playwright/Chromium | Saúde, proxy, acesso protegido, restauração de dados, login no navegador, Equipes, IA, criação e desativação de contas, criação de chamado, CSV, plano e confirmação de automação |
+| [Validar documentação](../../.github/workflows/docs.yml) | Links/UML e `llms-full.txt` regenerado | Integridade documental |
+| [Dependency Security Audit](../../.github/workflows/dependency-audit.yml) | `pip-audit` e `npm audit --audit-level=high` | Alertas públicos de dependências em PRs e a cada semana; não equivale a pentest |
 
-1. **Unitário (futuro):** cálculo SLA, permissões, transições de status, validações e transformação de resposta da IA.
-2. **Integração API/banco (futuro):** endpoints + PostgreSQL isolado, integridade entre tickets e histórico, rollback de transação.
-3. **Contrato API (futuro):** status HTTP, validação de request/response e paginação conforme OpenAPI.
-4. **Frontend (futuro):** formulários, filtros, estados de loading/erro, acessibilidade básica.
-5. **End-to-end (futuro):** login → chamado → atribuição → resolução → alteração no painel.
-6. **Segurança (futuro):** IDOR, privilégios indevidos, limites e entradas adversariais.
+CI confirma o que está no commit testado e agora inclui uma jornada automatizada com Chromium e banco isolado. **Não substitui** a validação humana da experiência no Windows nem o teste de inferência real do Qwen. O teste automatizado usa `AI_PROVIDER=mock`, não executa ações em sistemas externos.
 
-## 2. Casos de teste prioritários
+## Teste de inferência Ollama no Windows
 
-| ID | Caso | Esperado | Etapa |
-|---|---|---|---|
-| DB-01 | Base nova com seed | 8 tabelas, dados demo, views criadas | Parte 1 |
-| DB-02 | Prioridade inválida | Restrição do banco rejeita | Parte 1 |
-| DB-03 | Conta fictícia | Seed permanece inativa | Parte 1 |
-| API-01 | Criar chamado válido | HTTP 201, solicitante do token, SLA e histórico | Parte 2 |
-| API-02 | Campo obrigatório ausente | HTTP 422, nenhum registro criado | Parte 2 |
-| AUTH-01 | Solicitante busca chamado alheio | Acesso negado sem dados vazados | Parte 2 |
-| AUTH-02 | Solicitante altera prioridade | Acesso negado | Parte 2 |
-| SLA-01 | Prioridade alta | Prazo = abertura + 240 min | Parte 2 |
-| SLA-02 | Resolução após o prazo | Indicador `fora_do_prazo` | Parte 4 |
-| HIS-01 | Alteração de responsável | Evento de histórico com ator | Parte 2 |
-| UI-01 | Filtros da tabela | Chamados visíveis correspondem aos filtros | Parte 3 |
-| IA-01 | Sugestão pendente | Chamado não é alterado | Parte 5 |
-| IA-02 | Retorno da IA inválido/timeout | Erro controlado, triagem manual disponível | Parte 5 |
-| SEC-01 | Conteúdo malicioso de comentário | Não executar HTML/script no navegador | Parte 3 |
-
-## 3. Como validar a Parte 1 (Windows/PowerShell)
-
-Na raiz do repositório, com Docker Desktop iniciado:
+Na raiz do projeto, com Ollama ativo e `qwen2.5:3b` já baixado:
 
 ```powershell
-Copy-Item .env.example .env
-# Edite POSTGRES_PASSWORD e salve antes de iniciar
-notepad .env
-docker compose up -d
-docker compose ps
-.\scripts\testar-banco.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
 ```
 
-Para inspecionar consultas SQL:
+O script usa apenas um prompt fictício, aceita somente `localhost`/`127.0.0.1` e verifica `/api/tags` e `/api/chat`. **Não testa** a chamada autenticada entre FastAPI e Ollama nem a qualidade da análise de um chamado real. A próxima seção permanece obrigatória.
+
+## Validação manual obrigatória antes de release
+
+- Login com conta válida; logout e expiração de JWT.
+- Administrador cria, desativa/reativa conta; analista e solicitante não acessam gestão de usuários; conferir eventos em `user_audit_events`.
+- Conta ativa consegue trocar a própria senha fornecendo a senha atual; senha incorreta não altera hash.
+- Criar e localizar um chamado; alterar prioridade e conferir recálculo de SLA; avançar status e inspecionar auditoria.
+- Conferir que solicitante não visualiza chamados alheios nem comentários internos.
+- Exportar CSV filtrado e abrir em planilha; não interpretar títulos começando em `=`, `+`, `-` ou `@` como fórmulas.
+- Acessar Equipes e Central de IA: checar indicadores e ausência de dados pessoais no resumo.
+- Com `AI_PROVIDER=ollama`, gerar sugestão, rejeitar/aprovar e conferir que nenhuma ação foi executada sem aprovação.
+- Gerar plano de resolução com Qwen, conferir que causa é tratada como hipótese e que etapas são revisáveis.
+- Executar cada automação com confirmação explícita; verificar comentário público, histórico e que o chamado nunca é marcado como resolvido automaticamente.
+- Desligar Ollama temporariamente e conferir erro controlado e continuidade do atendimento manual.
+- Testar os containers em porta local, simular falha do PostgreSQL e conferir tratamento; restaurar base a partir de backup de teste.
+
+## Comandos
+
+No backend com PostgreSQL de teste configurado:
 
 ```powershell
-Get-Content -Raw 'db/queries/indicadores.sql' | docker compose exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
-```
-
-**Atenção:** os SQL em `db/init/` são executados só na primeira criação do volume. `docker compose down -v` apagará todos os dados do banco local: usar somente para reset intencional da demo.
-
-**Registro sugerido de evidência:** data, ambiente (versão Docker/PostgreSQL), comando, resultado, eventual falha e link para issue. Não atualizar este documento para `testado` sem execução.
-
-## 4. Comandos previstos para testes futuros (ainda não disponíveis)
-
-```powershell
-# Executar depois que a Parte 2 criar o backend e dependências
 cd backend
 python -m pytest -q
 ```
 
-A CI do GitHub Actions será configurada na Parte 6 para bloquear merges com lint/testes falhando. São metas, não verificações atuais.
+No frontend:
 
-## 5. Critérios de aprovação de release
+```powershell
+cd frontend
+npm ci
+npm run build
+```
 
-- Requisitos P0 demonstrados com dados reais de banco de teste.
-- Testes críticos de autorização e persistência passando.
-- Nenhuma falha de segurança crítica conhecida sem mitigação.
-- Documentação alinhada ao funcionamento atual; limitações explícitas.
-- Smoke test reproduzível por outra pessoa, sem credenciais fornecidas pelo autor.
-- Fluxo completo demonstrável e falhas de IA tratadas sem comprometer o suporte manual.
+Para stack Docker privada:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+Invoke-RestMethod http://127.0.0.1:8080/api/health
+Invoke-RestMethod http://127.0.0.1:8080/api/health/db
+```
+
+O banco de dados local pode conter dados de teste persistentes. **Não execute `docker compose down -v` para depurar problemas de frontend/backend.** Não use `db/init/*.sql` para migrar uma base existente.
+
+## Pendências de produção
+
+- Expandir E2E de Chromium para outros navegadores, dispositivos, perfis de acesso e cenários de falha. A suíte atual cobre o percurso principal em ambiente descartável.
+- Verificações de carga, observabilidade, retenção/backup, segurança independente e plano de recuperação operacional. A restauração isolada do CI não prova capacidade de recuperar dados reais de produção.
+- Revisão de login contra brute force em infraestrutura distribuída; o rate limit Nginx é apenas uma camada.
+- Homologação de conectores corporativos futuros antes de ativar correções externas.
+
+A documentação não afirma que uma funcionalidade foi validada manualmente sem evidência. Consulte também [o guia de release](../implantacao/guia-de-release.md).
+
+
+---
+
+## Fonte: `docs/implantacao/guia-de-release.md`
+
+# Guia de release e implantação — PulseOps AI
+
+## 1. Escopo e status
+
+A stack está preparada para **demonstração local privada**, não para exposição pública automática. Há backend FastAPI, PostgreSQL e frontend React servido por Nginx em `localhost`. Segurança corporativa, TLS, backup recuperável e testes humanos são requisitos adicionais antes de usar com dados reais.
+
+## 2. Preparar ambiente Windows
+
+Tenha Docker Desktop e Git instalados. Na raiz do repositório:
+
+```powershell
+git status
+Copy-Item .env.example .env
+notepad .env
+```
+
+**Se `.env` já existir, não sobrescreva.** O arquivo deve conter `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET_KEY`, `APP_PORT` e `AI_PROVIDER`. Gere um `JWT_SECRET_KEY` aleatório com 32+ caracteres. Para gerar uma opção privada em PowerShell:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Copie o resultado **somente** para seu `.env` local. Não compartilhe o segredo no chat, nem faça commit de `.env`. Evite `@`, `:`, `/` e `#` na senha usada no URL do PostgreSQL (ou faça URL-encoding dos caracteres especiais).
+
+## 3. Atualizar volume PostgreSQL existente (sem descartar dados)
+
+Se o volume foi criado **antes** da funcionalidade de administração de contas, aplique a migração idempotente após fazer backup e antes de subir a nova API. O comando abaixo usa o serviço PostgreSQL configurado no `compose.yaml` e não depende de credenciais digitadas na linha de comando:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d database
+Get-Content -Raw .\db\migrations\20261109_user_account_audit.sql | docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
+```
+
+O comando cria somente `user_audit_events` e seu índice, sem apagar registros. Em banco recém-inicializado, essa tabela já existe. Não reexecute `db/init/01_schema.sql` sobre um banco em uso.
+
+## 4. Subir aplicação (sem apagar dados)
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml config --quiet
+docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+docker compose -f compose.yaml -f compose.app.yaml ps
+```
+
+Abra `http://127.0.0.1:8080` (ou a porta `APP_PORT` indicada). Teste:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/api/health
+Invoke-RestMethod http://127.0.0.1:8080/api/health/db
+```
+
+O proxy roteia `/api/*` para a FastAPI, e o frontend usa URL relativa. O backend não publica porta no host. O PostgreSQL já estava limitado a `127.0.0.1` no arquivo original.
+
+### Criar primeira conta
+
+O seed SQL contém **contas inativas**. Para criar uma conta administrativa própria, sem senha fixa:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml exec backend python -m scripts.create_admin --email admin@exemplo.local --name "Administrador"
+```
+
+Digite uma senha forte quando o terminal solicitar. O script se recusa a sobrescrever e-mails existentes. Use esse comando apenas na base que você administra.
+
+## 5. IA
+
+O Docker usa `AI_PROVIDER=mock` inicialmente. Isso permite demonstrar o fluxo, **mas não é um LLM**.
+
+Para usar Ollama no próprio Docker:
+
+1. Ajuste `AI_PROVIDER=ollama` e `OLLAMA_BASE_URL=http://ollama:11434` no `.env` da raiz.
+2. Inicie com o perfil `local-ai`:
+   ```powershell
+   docker compose -f compose.yaml -f compose.app.yaml --profile local-ai up -d --build --wait
+   ```
+3. Baixe o modelo dentro do contêiner (o download feito no Windows não é compartilhado automaticamente):
+   ```powershell
+   docker compose -f compose.yaml -f compose.app.yaml --profile local-ai exec ollama ollama pull qwen2.5:3b
+   ```
+4. Confira o dashboard e teste um chamado fictício. Não exponha a porta 11434 à internet.
+
+Se o Ollama já está instalado diretamente no Windows, valide o serviço e a resposta JSON com o script local (na raiz do projeto):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O teste usa apenas dados fictícios e não substitui a validação da conexão da API FastAPI com o modelo.
+
+Alternativa para desenvolvimento no Windows: mantenha FastAPI fora do Docker apontando para o Ollama local em `http://127.0.0.1:11434`. API OpenAI é opcional e pode gerar cobrança; a chave fica somente no backend.
+
+## 6. Verificações antes de release
+
+- Verifique que `JWT_SECRET_KEY` é aleatório/privado, que o modo `APP_ENVIRONMENT=production` recusa segredos fracos e que `/api/openapi.json` não está disponível.
+- Em `http://127.0.0.1:8080`, teste login, listagem e criação de tickets, filtros/CSV, Equipes, Central de IA e resolução supervisionada.
+- Confira `/api/health/db`, registros em `ticket_history` e falhas controladas ao desligar o provedor IA.
+- Confirme que a aprovação de automação aparece **antes** da execução e que o comentário público não contém senhas nem dados sensíveis.
+- Faça backup de teste e **restaure** em uma base descartável. O CI já testa dump e restore na stack isolada; ainda é necessário validar o procedimento no ambiente de instalação real.
+
+### Backup do PostgreSQL
+
+O comando abaixo produz um dump SQL em arquivo local fora do Git. Ajuste o destino e proteja esse arquivo:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml exec -T database sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > pulseops-backup.sql
+```
+
+O processo de restauração deve ser validado **somente em banco de teste descartável** antes de qualquer uso com dados importantes. Nunca faça backup em repositório público.
+
+## 7. Encerramento e deploy externo
+
+Pare containers sem apagar volumes:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml down
+```
+
+**Nunca execute `down -v`** sem intenção explícita de descartar o banco.
+
+O compose publica frontend somente em `127.0.0.1`. Para hospedagem pública, primeiro configure domínio, proxy HTTPS/TLS, secrets no provedor, storage persistente gerenciado, backups automáticos, monitoramento, proteção de autenticação, licenças e política de privacidade. **Nenhum deploy externo foi realizado por este guia.** A aplicação não deve ser apresentada como pronta para uso corporativo antes de cumprir essas condições.
+
+## 8. Histórico de PRs
+
+- PR #23: provedor Ollama e visibilidade do modelo.
+- PR #24: planos e automações aprovadas.
+- PR #25: Equipes, Central de IA, CSV, stack Docker, bootstrap, testes e documentação.
+
+Os PRs **#23, #24 e #25 foram integrados em `develop` em 09/11/2026** com testes automatizados concluídos. A gestão de contas, migração de auditoria e verificações adicionais foram desenvolvidas no PR #26. Isso **não** representa deploy público nem substitui homologação com Ollama e infraestrutura real. Não publicar a `main` automaticamente nem apagar o histórico do Git.
 
 
 ---

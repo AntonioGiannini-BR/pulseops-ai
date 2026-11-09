@@ -1,0 +1,71 @@
+.modal.ticket-details-dialog {
+  width: min(100%, 640px);
+}
+
+.ticket-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ticket-detail-summary > div {
+  padding: 15px;
+  border: 1px solid #e8edf6;
+  border-radius: 10px;
+  background: #f8fafd;
+}
+
+.ticket-detail-summary dt {
+  font-size: 11px;
+  color: #8190a6;
+  margin-bottom: 10px;
+}
+
+.ticket-detail-summary dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #233551;
+}
+
+.ticket-detail-description {
+  margin-top: 24px;
+  border-top: 1px solid #e8edf6;
+  padding-top: 20px;
+}
+
+.ticket-detail-description h3 {
+  font-size: 14px;
+  color: #172544;
+}
+
+.ticket-detail-description p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #56657c;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ticket-clickable-row {
+  cursor: pointer;
+}
+
+.ticket-clickable-row:hover td {
+  background: #f4f8ff;
+}
+
+.ticket-open-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #5682db;
+  font-size: inherit;
+  font-weight: 750;
+}
+
+@media (max-width: 580px) {
+  .ticket-detail-summary {
+    grid-template-columns: 1fr;
+  }
+}

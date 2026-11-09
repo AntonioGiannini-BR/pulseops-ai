@@ -123,6 +123,20 @@ CREATE TABLE ai_suggestions (
 );
 CREATE INDEX idx_ai_suggestions_ticket ON ai_suggestions(ticket_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS user_audit_events (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    actor_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+    target_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+    action VARCHAR(30) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT user_audit_action_valid CHECK (
+        action IN ('conta_criada','conta_desativada','conta_reativada','senha_alterada')
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_audit_target_date
+    ON user_audit_events(target_user_id, created_at DESC);
+
 COMMENT ON TABLE app_users IS 'Contas de usuários; nunca armazenar senhas em texto puro';
 COMMENT ON COLUMN tickets.due_at IS 'Prazo calculado pela API usando sla_policies e horas corridas';
 COMMENT ON COLUMN ai_suggestions.review_status IS 'Sugestões requerem aprovação humana antes de qualquer mudança';

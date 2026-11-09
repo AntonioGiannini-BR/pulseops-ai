@@ -1,82 +1,98 @@
-# PulseOps AI — Gestão Inteligente de Operações
+# PulseOps AI — Gestão Inteligente de Service Desk
 
-Projeto de portfólio para estudar engenharia de software aplicada a suporte corporativo: gestão de chamados, rastreabilidade, SLAs, métricas e, futuramente, sugestões assistidas por IA com revisão humana.
+Plataforma demonstrativa de gestão de chamados com **React + TypeScript**, **FastAPI**, **PostgreSQL** e triagem supervisionada por IA. Projeto de engenharia de software voltado a portfólio, aprendizagem e validação funcional.
 
-> **Status: Parte 1 — planejamento, documentação UML e protótipo.** O painel HTML/CSS/JavaScript funciona offline com dados fictícios. Esquema PostgreSQL, Docker e scripts de testes estão preparados, mas a execução do banco deve ser validada localmente. **FastAPI, React, login, integrações e IA ainda não estão implementados.**
+> **Estado:** MVP implementado em branches de desenvolvimento e PRs; CI verifica API, frontend, banco e stack Docker. Um deploy público/empresarial **não** está ativado nem homologado. O modo `mock` usa regras locais; para IA generativa real use Ollama ou API OpenAI configurada.
 
-![Prévia do protótipo do dashboard](docs/imagens/dashboard-preview.png)
+![Prévia do painel](docs/imagens/dashboard-preview.png)
 
-## Documentação principal
+## Funcionalidades do MVP
 
-- [Índice de toda a documentação](docs/00-indice.md) — comece aqui.
-- [Planejamento](docs/planejamento/plano-geral.md) e [roadmap](docs/planejamento/roadmap-e-sprints.md).
-- [Requisitos e histórias de usuário](docs/requisitos/requisitos-e-historias.md) e [regras de negócio](docs/requisitos/regras-de-negocio.md).
-- [Arquitetura](docs/arquitetura/arquitetura.md), [galeria visual](docs/arquitetura/galeria-visual.md) e [diagramas PlantUML](docs/uml/README.md).
-- [Modelagem do banco de dados](docs/banco-de-dados/modelagem.md) e [API planejada](docs/api/contrato-api.md).
-- [Segurança](docs/seguranca/seguranca-e-privacidade.md), [testes](docs/testes/plano-de-testes.md) e [guia de commits](docs/contribuicao/git-e-commits.md).
-- **Para IA e agentes:** [`llms.txt`](llms.txt) (mapa curto) e [`llms-full.txt`](llms-full.txt) (documentação consolidada).
+- Login por JWT; perfis `admin`, `analista` e `solicitante`; sessão mantida somente em memória no frontend.
+- **Administração de contas:** cadastro e desativação de analistas/solicitantes, auditoria por administrador e troca da própria senha. Sem cadastro público nem criação de novos administradores pela interface.
+- Criação e acompanhamento de chamados, responsável, status, prioridade, comentários públicos/internos e histórico.
+- Prazos de SLA, indicadores e distribuição dos chamados; busca/filtros e **exportação CSV dos registros visíveis**.
+- **Equipes:** contagens de usuários ativos, analistas e tickets por departamento.
+- **Central de IA:** status de provedor e indicadores de sugestões aprovadas, pendentes e rejeitadas.
+- **Triagem por IA:** prioridade/categoria/justificativa sugeridas, aplicadas apenas após revisão humana.
+- **Assistente de resolução:** hipótese, roteiro de investigação e resposta sugerida por IA.
+- **Automações aprovadas:** diagnóstico do banco da própria plataforma, comentário com orientações padronizadas e avanço seguro do fluxo. **Não altera senhas/permissões externas nem executa comandos arbitrários.**
+- Auditoria de mudanças e testes automatizados.
 
-## Arquitetura atual e proposta
+## Como rodar no Windows (desenvolvimento)
 
-**Parte 1:** protótipo independente do banco; scripts SQL e PostgreSQL via Docker Compose preparados para validação.
+Pré-requisitos: Docker Desktop com PostgreSQL, Python 3.11+, Node 22+, Git. Para IA real local: [Ollama](https://ollama.com/download/windows) e `ollama pull qwen2.5:3b`.
 
-![Estado atual da Parte 1](docs/imagens/01-arquitetura-atual.png)
+O projeto usa dois ambientes separados: `.env` na raiz para o PostgreSQL do Docker e `backend/.env` para a API. **Preserve suas configurações existentes**; nunca execute scripts de inicialização sobre um banco em uso.
 
-**Planejado:** React + TypeScript, FastAPI, PostgreSQL e modelo de IA com revisão humana.
+Em bancos **já existentes**, antes de atualizar a API, aplique uma única vez a migração não destrutiva `db/migrations/20261109_user_account_audit.sql` (veja o guia de implantação). Em bancos novos a tabela é criada pelo `db/init/01_schema.sql`.
 
-![Arquitetura-alvo planejada](docs/imagens/02-arquitetura-alvo.png)
-
-## Executar protótipo no Windows
-
-1. Extraia este projeto e abra a pasta no VS Code.
-2. Abra `prototype/index.html` no navegador. A interface é demonstrativa e não salva alterações no PostgreSQL.
-3. Para subir o banco local, com o Docker Desktop aberto, execute no PowerShell:
+No primeiro uso, configure uma senha de banco forte em `.env` (baseado em `.env.example`) e inicie apenas o PostgreSQL:
 
 ```powershell
-Copy-Item .env.example .env
-notepad .env
-# Troque POSTGRES_PASSWORD por uma senha de desenvolvimento forte antes de prosseguir
-docker compose up -d
-docker compose ps
-.\scripts\testar-banco.ps1
+docker compose up -d database
 ```
 
-Para entrar no banco:
+No arquivo `backend/.env`, defina a URL real do PostgreSQL, uma chave JWT privada e o Ollama:
+
+```dotenv
+DATABASE_URL=postgresql+psycopg://USUARIO:SENHA@127.0.0.1:5432/NOME_DO_BANCO
+JWT_SECRET_KEY=GERE_E_GUARDE_UM_SEGREDO_ALEATORIO
+AI_PROVIDER=ollama
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+```
+
+Se não tiver conta ativa, crie um administrador de forma interativa, **sem colocar a senha no terminal como argumento**:
 
 ```powershell
-docker compose exec database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+cd backend
+python -m pip install -r requirements.txt
+python -m scripts.create_admin --email admin@exemplo.local --name "Administrador"
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
-> **Atenção:** `docker compose down -v` apaga o volume do PostgreSQL. Os arquivos `db/init/*.sql` são aplicados somente na criação inicial do volume. Mudanças posteriores exigirão migrações.
-
-## Fontes disponíveis
-
-```text
-prototype/         HTML, CSS e JavaScript da demonstração
-db/init/           Esquema e dados fictícios para PostgreSQL
-db/queries/        Consultas analíticas
-db/tests/          Testes SQL preparados
-compose.yaml       Serviço local PostgreSQL
-scripts/           Verificação do banco, renderização UML e validação dos docs
-docs/              Planejamento, arquitetura, UML e imagens
-llms.txt           Navegação resumida para LLMs
-llms-full.txt      Contexto textual consolidado
-```
-
-## Qualidade e segurança
-
-- Não publique `.env`, credenciais ou dados reais de clientes.
-- Os dados do protótipo são fictícios e não constituem autenticação ou sistema pronto para produção.
-- Autenticação, autorização, proteção de API, logs de auditoria e testes end-to-end são **objetivos futuros**.
-- A renderização das fontes PlantUML oficiais depende de Java + JAR PlantUML no computador. As imagens existentes são prévias e não substituem a validação dessas fontes.
-
-## Verificar a documentação
-
-A ação [Validar documentação](.github/workflows/docs.yml) também executa essas verificações automaticamente no GitHub.
+Em outro terminal:
 
 ```powershell
-python scripts/gerar-llms-full.py
-python scripts/validar-documentacao.py
+cd frontend
+npm ci
+"VITE_API_URL=http://127.0.0.1:8010" | Set-Content .env.local
+npm run dev
 ```
 
-[Documentação técnica consolidada](DOCUMENTACAO.md) · [Guia de Git e commits](docs/contribuicao/git-e-commits.md)
+Acesse `http://localhost:5173`. A API de desenvolvimento possui Swagger em `http://127.0.0.1:8010/docs`. No Docker com `APP_ENVIRONMENT=production`, Swagger público fica desabilitado.
+
+Para verificar o Ollama **já instalado no Windows**, antes de conectar o FastAPI, execute na raiz do projeto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\testar-ollama.ps1
+```
+
+O script verifica o modelo e uma resposta JSON com um texto fictício, sem executar ações.
+
+## Stack completa em Docker (demonstração privada)
+
+Use `compose.app.yaml` sobre `compose.yaml`: PostgreSQL + FastAPI + Nginx/React, com acesso restrito à máquina local por padrão. Requer `JWT_SECRET_KEY` privado de no mínimo 32 caracteres no `.env` da raiz.
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+```
+
+Acesse `http://127.0.0.1:8080`. A API usa o prefixo `/api` no proxy Nginx. A inicialização **não recria um volume existente**; nunca use `docker compose down -v` em dados importantes.
+
+O Ollama opcional dentro do Docker exige `--profile local-ai` e baixar o modelo nesse contêiner. O modelo instalado no Windows **não é automaticamente compartilhado com esse contêiner**. Veja os comandos completos, criação segura de conta, teste e backup no [Guia de implantação e release](docs/implantacao/guia-de-release.md).
+
+## Qualidade e documentação
+
+- [Testes e checklist de release](docs/testes/plano-de-testes.md) — inclui Chromium/Playwright e backup/restauração descartável em CI
+- **Auditoria de dependências:** `pip-audit` e `npm audit` executados em Pull Requests, em `develop`/`main` e semanalmente.
+- [Contrato implementado da API](docs/api/contrato-api.md)
+- [Triagem supervisionada](docs/funcionalidades/ia-supervisionada.md)
+- [Resolução assistida e automações](docs/funcionalidades/resolucao-assistida.md)
+- [Arquitetura, UML e modelagem](docs/00-indice.md)
+- [Documentação técnica](DOCUMENTACAO.md), [`llms.txt`](llms.txt) e [`llms-full.txt`](llms-full.txt)
+
+### Limitações antes de uso empresarial
+
+O aplicativo ainda exige hospedagem HTTPS, secrets seguros, backup/restore testado, observabilidade, política de retenção e revisão de segurança independente. A autenticação usa JWT sem revogação central e a IA não acessa sistemas corporativos externos; o deploy em Docker **não é uma homologação de produção**. A sugestão de um LLM não é comprovação de diagnóstico ou correção.

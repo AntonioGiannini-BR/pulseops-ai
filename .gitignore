@@ -15,3 +15,5 @@ node_modules/
 
 # Ferramentas locais nao distribuidas
 tools/plantuml.jar
+
+/backend/.env

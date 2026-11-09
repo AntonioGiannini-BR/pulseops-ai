@@ -1,0 +1,102 @@
+.ticket-ai {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #dce6f4;
+  border-radius: 12px;
+  background: #f8fafd;
+}
+
+.ticket-ai-heading,
+.ticket-ai-card-head,
+.ticket-ai-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ticket-ai h3 {
+  margin: 0 0 6px;
+  color: #172544;
+  font-size: 15px;
+}
+
+.ticket-ai-heading p,
+.ticket-ai-hint,
+.ticket-ai-rationale,
+.ticket-ai-origin,
+.ticket-ai-reviewed {
+  color: #56657c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ticket-ai-heading p { margin: 0; }
+
+.ticket-ai button {
+  padding: 9px 13px;
+  border: 1px solid #326df4;
+  border-radius: 8px;
+  background: #326df4;
+  color: white;
+  font-weight: 650;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ticket-ai button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.ticket-ai button:focus-visible {
+  outline: 3px solid #a2bdff;
+  outline-offset: 2px;
+}
+
+.ticket-ai-card {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #dce6f4;
+  border-radius: 9px;
+  background: white;
+}
+
+.ticket-ai-card-head strong { font-size: 13px; color: #172544; }
+.ticket-ai-status {
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #edf2fb;
+  color: #405674;
+}
+.ticket-ai-status.aprovada { background: #e1f5e9; color: #176d42; }
+.ticket-ai-status.rejeitada { background: #fce9e9; color: #a12d38; }
+
+.ticket-ai-summary {
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.ticket-ai-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.ticket-ai-fields dt { color: #73849b; font-size: 11px; }
+.ticket-ai-fields dd { margin: 5px 0 0; color: #263951; font-size: 13px; font-weight: 650; }
+.ticket-ai-origin { margin-bottom: 0; }
+.ticket-ai-actions { justify-content: flex-start; margin-top: 12px; }
+.ticket-ai button.ticket-ai-reject { background: white; color: #a12d38; border-color: #d9a8ad; }
+.ticket-ai-error { color: #a12d38; font-size: 12px; }
+.ticket-ai-notice { color: #176d42; font-size: 12px; }
+.ticket-ai-reviewed { display: block; margin-top: 10px; }
+
+@media (max-width: 520px) {
+  .ticket-ai-fields { grid-template-columns: 1fr; }
+  .ticket-ai-heading button { width: 100%; }
+}
