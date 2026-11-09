@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { updateTicketPriority } from '../services/api'
 import type { TicketPriority } from '../types/tickets'
 
@@ -18,6 +18,11 @@ export default function TicketPriorityControl({
   const [selected, setSelected] = useState<TicketPriority>(priority)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Uma sugestão de IA aprovada também pode alterar a prioridade.
+  useEffect(() => {
+    setSelected(priority)
+  }, [priority])
 
   async function handleSave() {
     if (saving || selected === priority) return

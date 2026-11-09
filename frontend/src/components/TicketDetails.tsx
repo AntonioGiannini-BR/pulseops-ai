@@ -4,6 +4,7 @@ import TicketHistory from './TicketHistory'
 import TicketComments from './TicketComments'
 import TicketPriorityControl from './TicketPriorityControl'
 import TicketAssignmentControl from './TicketAssignmentControl'
+import TicketAISuggestions from './TicketAISuggestions'
 import type {
   Ticket,
   TicketPriority,
@@ -371,6 +372,32 @@ export default function TicketDetails({
                       ? { ...current, assignee_id: assigneeId }
                       : current
                   )
+                  setHistoryRevision((current) => current + 1)
+                }}
+              />
+            )}
+
+            {canUpdateStatus && (
+              <TicketAISuggestions
+                token={token}
+                ticketId={ticketId}
+                ticketStatus={ticket.status}
+                onCreated={() => setHistoryRevision((current) => current + 1)}
+                onReviewed={(result) => {
+                  setTicket((current) =>
+                    current
+                      ? {
+                          ...current,
+                          priority: result.ticket.priority,
+                          category_id: result.ticket.category_id,
+                          due_at: result.ticket.due_at,
+                          sla_status: undefined,
+                        }
+                      : current
+                  )
+                  if (result.suggestion.review_status === 'aprovada') {
+                    onPriorityChanged(ticketId, result.ticket.priority)
+                  }
                   setHistoryRevision((current) => current + 1)
                 }}
               />

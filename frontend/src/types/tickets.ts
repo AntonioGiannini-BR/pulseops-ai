@@ -86,3 +86,24 @@ export interface Analyst {
   id: number
   email: string
 }
+
+export type AIReviewStatus = 'pendente' | 'aprovada' | 'rejeitada'
+
+export interface TicketAISuggestion {
+  id: number
+  ticket_id: number
+  suggested_category_id: number | null
+  suggested_priority: TicketPriority | null
+  summary: string | null
+  rationale: string | null
+  model_name: string | null
+  review_status: AIReviewStatus
+  reviewed_by_id: number | null
+  reviewed_at: string | null
+  created_at: string
+}
+
+export interface TicketAIReviewResult {
+  suggestion: TicketAISuggestion
+  ticket: Pick<Ticket, 'id' | 'priority' | 'category_id' | 'due_at'>
+}
