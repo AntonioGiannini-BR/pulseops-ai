@@ -40,7 +40,7 @@ def main() -> int:
         try:
             page.goto(base, wait_until="domcontentloaded")
             page.get_by_label("E-mail").fill("ci-e2e@pulseops.invalid")
-            page.get_by_label("Senha").fill(password)
+            page.locator("#login-password").fill(password)
             page.get_by_role("button", name="Entrar na plataforma").click()
             expect(page.get_by_role("heading", name="Visão geral", exact=True)).to_be_visible()
 
