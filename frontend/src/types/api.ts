@@ -65,3 +65,14 @@ export interface UserCreatePayload {
   role: 'analista' | 'solicitante'
   department_id: number | null
 }
+
+
+export interface UserAuditEvent {
+  id: number
+  action: 'conta_criada' | 'conta_desativada' | 'conta_reativada' | 'senha_alterada'
+  actor_id: number | null
+  target_user_id: number | null
+  actor_email: string | null
+  target_email: string | null
+  created_at: string
+}
