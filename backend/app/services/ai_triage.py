@@ -91,7 +91,7 @@ def _ollama_proposal(
     }
     try:
         response = httpx.post(
-            "http://127.0.0.1:11434/api/chat",
+            f"{settings.ollama_base_url}/api/chat",
             json={
                 "model": settings.ollama_model,
                 "stream": False,

@@ -3,7 +3,8 @@
 function safeCell(value: string | number): string {
   const text = String(value)
   // Excel/LibreOffice: prefixar fórmulas para prevenir CSV injection.
-  const sanitized = /^[\\s]*[=+@-]/.test(text) ? "'" + text : text
+  const sanitized = ['=', '+', '-', '@'].some((prefix) => text.trimStart().startsWith(prefix))
+    ? "'" + text : text
   return '"' + sanitized.replaceAll('"', '""') + '"'
 }
 

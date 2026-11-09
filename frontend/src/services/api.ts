@@ -10,16 +10,12 @@ import type {
   LoginResponse,
 } from '../types/api'
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  if (!API_URL) {
-    throw new Error('Endereço da API não configurado.')
-  }
-
   let response: Response
 
   try {
