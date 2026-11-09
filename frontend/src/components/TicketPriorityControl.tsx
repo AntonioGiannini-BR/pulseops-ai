@@ -6,7 +6,7 @@ interface TicketPriorityControlProps {
   token: string
   ticketId: number
   priority: TicketPriority
-  onUpdated: (priority: TicketPriority) => void
+  onUpdated: (priority: TicketPriority, dueAt: string | null) => void
 }
 
 export default function TicketPriorityControl({
@@ -32,7 +32,7 @@ export default function TicketPriorityControl({
         selected,
       )
 
-      onUpdated(updated.priority)
+      onUpdated(updated.priority, updated.due_at)
     } catch (err) {
       setError(
         err instanceof Error
