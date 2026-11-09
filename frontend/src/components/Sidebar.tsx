@@ -4,12 +4,14 @@ interface SidebarProps {
   currentPage: Page
   onNavigate: (page: Page) => void
   totalTickets?: number
+  role: 'admin' | 'analista' | 'solicitante'
 }
 
 export default function Sidebar({
   currentPage,
   onNavigate,
   totalTickets = 0,
+  role,
 }: SidebarProps) {
   const menuItems: {
     page: Page
@@ -47,7 +49,7 @@ export default function Sidebar({
       <div className="nav-label">MENU PRINCIPAL</div>
 
       <nav className="nav" aria-label="Navegação principal">
-        {menuItems.map((item) => (
+        {menuItems.filter((item) => role !== 'solicitante' || item.page === 'tickets').map((item) => (
           <button
             key={item.page}
             type="button"

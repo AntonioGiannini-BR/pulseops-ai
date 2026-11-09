@@ -6,8 +6,9 @@ import AICenter from './pages/AICenter'
 import './styles/operations.css'
 import Sidebar from './components/Sidebar'
 
-import { getDashboardSummary } from './services/api'
+import { getDashboardSummary, getCurrentUser } from './services/api'
 import type { DashboardSummary } from './types/api'
+import type { AuthenticatedUser } from './types/tickets'
 
 const REFRESH_INTERVAL_MS = 30_000
 
@@ -37,10 +38,33 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [userRole, setUserRole] = useState<AuthenticatedUser['role'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+    void getCurrentUser(token, controller.signal)
+      .then((user) => {
+        if (controller.signal.aborted) return
+        setUserRole(user.role)
+        if (user.role === 'solicitante') setCurrentPage('tickets')
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : 'Não foi possível identificar o usuário.')
+        }
+      })
+    return () => controller.abort()
+  }, [token])
+
+  useEffect(() => {
+    if (userRole === null || userRole === 'solicitante') {
+      setSummary(null)
+      setLoading(false)
+      return
+    }
+
     const controller = new AbortController()
     let timeoutId: ReturnType<typeof setTimeout> | undefined
 
@@ -87,9 +111,10 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
         clearTimeout(timeoutId)
       }
     }
-  }, [token])
+  }, [token, userRole])
 
   function navigate(page: Page) {
+    if (userRole === 'solicitante' && page !== 'tickets') return
     setCurrentPage(page)
     setMenuOpen(false)
   }
@@ -101,6 +126,7 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
           currentPage={currentPage}
           onNavigate={navigate}
           totalTickets={summary?.total_chamados ?? 0}
+          role={userRole ?? 'solicitante'}
         />
       </div>
 
@@ -161,7 +187,7 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
                   : 'Indicadores atualizados com dados do PostgreSQL.'}
             </div>
 
-            {currentPage === 'overview' && (
+            {userRole !== null && currentPage === 'overview' && (
               <Dashboard
                 summary={summary}
                 loading={loading}
@@ -173,8 +199,8 @@ export default function DashboardApp({ token, onLogout }: DashboardAppProps) {
               <Tickets token={token} />
             )}
 
-            {currentPage === 'teams' && <Teams token={token} />}
-            {currentPage === 'ai' && <AICenter token={token} />}
+            {userRole !== null && userRole !== 'solicitante' && currentPage === 'teams' && <Teams token={token} />}
+            {userRole !== null && userRole !== 'solicitante' && currentPage === 'ai' && <AICenter token={token} />}
           </section>
         </div>
       </main>
